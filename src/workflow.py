@@ -45,22 +45,22 @@ class RelaxationCalculation(Calculation):
         or combination of the two. Optimization excecuted via conjugate-gradient algorithm.
         """
         assert relax_type == 'v' or relax_type == 'p' or relax_type == 's' or relax_type == 'vp' or relax_type == 'vs' or relax_type == 'ps' or relax_type == 'vps', 'relax_type must positions, volume, shape, or any combination of the 3'
+        super(RelaxationCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_list)
         self._relax_type_ = relax_type
         self._encut_ = encut
         self._nsteps_ = nsteps
         self._epsilon_ = epsilon
         self._smear_ = smear
-        super(RelaxationCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_list)
         self._num_elec_ = structure._num_elec_
+        self._input_ = [self._relax_type_, self._encut_, self._nsteps_, self._epsilon_, self._smear_, self._num_elec_]
 
-
-    def set_calculation(self):
+    def make_calculation(self):
         """Sets input parameters for ground state calculation and makes files for calculation"""
         temp_dir = os.getcwd()
         os.mkdir(self._workdir_)
         print("Work Directory now in:" + self._workdir_)
         os.chdir(self._workdir_)
-        make_incar(self._structure_, self._pseudos_, self._input_)
+        make_incar(self._pseudos_, self._input_)
         make_poscar(self._structure_)
         make_potcar(self._pseudos_)
         make_runscript(self._parallelization_)
@@ -73,33 +73,65 @@ class RelaxationCalculation(Calculation):
 
 
 class SCFCalculation(Calculation):
-    def __init__(self, input, bands = True, rho = True, spin_orbit = True, spin_polar = 'regular', spin_axis = [0,0,0]):
-        """""
-        Sets input for relaxation calculation
+    def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
+        """OUTPUT List:
+           Istart:
+              - 0 = begin from scratch
+              - 1 = continue job w energy cutoff
+              - 2 = continue, restart w constant basis
+           ICHARG:
+               -   0 (computes from initial wfn)
+               - = 1 extrapolate from old positions, reads from CHCAR
+
+          LORBIT =  10 ==> not decomposed DOS
+          LORBIT = 11 ==> decomposed DOS
         """
-        self._bands_ = bands
-        self._rho_   = rho
-        self._spin_orbit_ = True
-        self._spin_polar_  = 'regular'
-        self._dos_ =
-        super(RelaxationCalculation, self).__init__(bands,  )
+        super(SCFCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_lists)
 
-        def set_calculation(self, ):
+        self._scf_setting_ = [charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym]
+        self._ionic_  = []
+        self._dos_ = [lorbit, dos_pts]
+        self._bands_options_ = [k_path, nbnds, charge_option]
+        self._magentic_options_ = [spin_polar, magmom, spin_orbit]
+        self._hubbard_ = [dft_u, dudarev, ldaul, u_param, j_param, lda_mix]
+        self._hybrid_ = [hf_calc, hf_fft, hf_max, hf_scren, hf_xch]
+        self._rho_decomp_ = [par_chg, en_rng, ref_ef, over_k, over_bnd]
+
+        def make_calculation(self):
+            """Sets input parameters for ground state calculation and makes files for calculation"""
+            temp_dir = os.getcwd()
+            os.mkdir(self._workdir_)
+            print("Work Directory now in:" + self._workdir_)
+            os.chdir(self._workdir_)
+            make_incar(self._pseudos_, self._input_)
+            make_poscar(self._structure_)
+            make_potcar(self._pseudos_)
+            make_runscript(self._parallelization_)
+            os.chdir(temp_dir)
 
 
-class PhononCalculation(Calculation):
-    def __init__(self, input):
-        """""
-        Sets input for relaxation calculation
-        """
-        self._algorithm_ =
-        self._bands_ =
-        self._rho_   =
-        self._spin_orbit_ =
-        self._charge_compensate_ =
-        self._spin_polar_  =
-        self._dos_ =
-        super(RelaxationCalculation, self).__init__(inialized inputs, )
+
+
+
+
+
+#class PhononCalculation(Calculation):
+#    def __init__(self, input):
+#        """""
+#        Sets input for relaxation calculation
+#        """
+#        self._algorithm_ =
+#        self._bands_ =
+#        self._rho_   =
+#        self._spin_orbit_ =
+#        self._charge_compensate_ =
+#        self._spin_polar_  =
+#        super(RelaxationCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_list )
+
+#class EFieldCalculation(Calculation):
+
+
+
 
 class SerialComputeFlow():
 """
@@ -120,11 +152,27 @@ Sets up a serial set of compuations which iterate over a desired degree of freed
         self._dos_ =
 
 
+
+
 class ConvergeTest(SerialComputeFlow):
     """
     Sets up a serial set of compuations which iterate over a desired degree of freedom
     (i.e. strain, dopant type/position, substrate)
     """
+
+    """OUTPUT List:
+       - CHG: chrge density, lattice vecctors, coords.
+       - DOSCAR: DOS
+       - EIGENVAL: bands
+       - IBZKPT: BZ
+       - LOCPOT: local potential
+       - OSZICAR: information at each nstep
+       - OUTCAR: outputfile, main
+       - PARCHG: partial charage density
+       - PROCAR: site projected wfn cahracter
+       - WAVECAR: wavefunctions and coefficients, eigenvalues
+    """
+
         self._algorithm_ =
         self._bands_ =
         self._rho_   =
@@ -147,6 +195,7 @@ class TimingTest(SerialComputeFlow):
         self._spin_polar_  =
         self._dos_ =
         super(SerialComputeFlow, self).__init__(inialized inputs, )
+
 
 class MagenticAnisotropyFlow(SerialComputeFlow):
     """
