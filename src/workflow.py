@@ -151,7 +151,7 @@ class BandCalculation(Calculation):
             print("Work Directory now in:" + self._workdir)
             os.chdir(self._workdir)
             make_incar(self._pseudos, self._input)
-            make_poscar(self._structure)
+            make_poscar(self. )
             make_potcar(self._pseudos)
             make_runscript(self._parallelization)
             os.chdir(temp_dir)
