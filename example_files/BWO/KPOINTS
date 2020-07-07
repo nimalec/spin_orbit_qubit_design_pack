@@ -1,5 +1,0 @@
-Automatic Mesh 
- 0 ! number of k-points at Gamma 
-Gamma  !center grid aroudn Gamma 
- 2 2 2 ! subdivisions N1, N2, N3 along recip. latt. vec. 
- 0  0  0  !k-shift 
