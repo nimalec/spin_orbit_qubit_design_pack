@@ -86,16 +86,16 @@ class SCFCalculation(Calculation):
           LORBIT =  10 ==> not decomposed DOS
           LORBIT = 11 ==> decomposed DOS
         """
-        super(SCFCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_lists, )
+        super(SCFCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_lists)
 
         self._electronic_settings = [charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym]
         self._ionic_settings  = []
         self._dos_settings = [lorbit, dos_pts]
-        self._magentic_options_ = [spin_polar, magmom, spin_orbit]
+        self._magentic_settings_ = [spin_polar, magmom, spin_orbit]
         self._hubbard_ = [dft_u, dudarev, ldaul, u_param, j_param, lda_mix]
         self._hybrid_ = [hf_calc, hf_fft, hf_max, hf_scren, hf_xch]
         self._rho_decomp_ = [par_chg, en_rng, ref_ef, over_k, over_bnd]
-        self._input_ = [self._electronic_setting_, self._parallelization_, self._ionic_ , self._dos_, self._magentic_options_, self._hubbard_, self._hybrid_, self._rho_decomp_]
+        self._input_settings_ = [self._electronic_setting_, self._parallelization_, self._ionic_ , self._dos_, self._magentic_options_, self._hubbard_, self._hybrid_, self._rho_decomp_]
 
         def make_calculation(self):
             """Sets input parameters for ground state calculation and makes files for calculation"""
@@ -223,13 +223,13 @@ Sets up a serial set of compuations which iterate over a desired degree of freed
     (i.e. strain, dopant type/position, substrate)
     """
         self._workdir = workdir
-        self._parameter = paramter
+        self._parameter = parameter
         self._dir_prefix = paramter
         self._dir_names = []
         self._ncalc = 0
-        self._param_list =
+        self._param_list = []
         self._calc_list = []
-        self._runscript =
+        self._runscript = make_serial_runscript()
 
     def setup_calc_series(self):
         os.chdir(self._workdir)
@@ -239,7 +239,7 @@ Sets up a serial set of compuations which iterate over a desired degree of freed
             self._dir_names.append(dirname)
             os.mkdir(dirname)
 
-    def add_calc(self):
+    def add_calc(self, para):
 
     def remove_calc(self):
 
@@ -291,25 +291,50 @@ Sets up a serial set of compuations which iterate over a desired degree of freed
     #     super(SerialComputeFlow, self).__init__(inialized inputs, )
 
 class MagenticAnisotropyFlow(SerialComputeFlow):
-    """
-    Sets up a serial set of compuations which iterate over a desired degree of freedom
-    (i.e. strain, dopant type/position, substrate)
-    """
+
     def __init__(self, cl_calc, polar_range, azimuth_range, ref_orient):
+        """
+        Sets up a serial set of compuations which iterate over a desired degree of freedom
+        (i.e. strain, dopant type/position, substrate)
+        """
         self._reference_orientation = ref_orient
-        self._cl_calc  =  cl_calc
         self._collinear_calc = cl_calc
         self._azimuth_range = polar_range
         self._polar_range = azimuth_range,
         self._symmetryreduce = [False, None, None]
+
         def generate_spin_axes_h(self):
             spin_list = []
             itr = 0
-            for i in self._azimuth_range:
-                for j in  self._polar_range:
-                    spin_list.append([itr, np.sin(i)*np.cos(j), np.sin(i)*np.sin(j), cos(j)])
+            for phi in self._azimuth_range:
+                for theta in  self._polar_range:
+                    spin_list.append([itr, np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(phi)])
+                    self._param_list.append([itr, np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(phi)])
                     itr += 1
             return spin_list
         self._spin_list = self.generate_spin_axes_h()
+
+        def set_calcualtions_h(self):
+            calc_list = []
+            for spin in self._spin_list:
+                temp_magnetic_settings = ['ncl', spin, None]
+                temp_calc = SCFCalculation(self._collinear_calc.algorithm_settings, self._collinear_calc.electronic_settings, temp_magnetic_settings, self._collinear_calc.hubbard_settings)
+                calc_list.append(temp_calc)
+                self._ncalc += 1
+            self._calc_list = calc_list
         super(SerialComputeFlow, self).__init__(inialized inputs, reference_orient)
-           
+        self.set_calcualtions_h()
+
+
+    def add_spin(self, spin):
+        """
+        Add spin to spin list and make directory
+        """
+        temp_magnetic_settings = ['ncl', spin, None]
+        temp_calc = SCFCalculation(self._collinear_calc.algorithm_settings, self._collinear_calc.electronic_settings, temp_magnetic_settings, self._collinear_calc.hubbard_settings)
+        calc_list.append(temp_calc)
+        self._ncalc += 1
+
+
+
+        
