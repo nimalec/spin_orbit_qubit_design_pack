@@ -1,83 +1,167 @@
-<<<<<<< HEAD
-    electronic_settings = [prec_level, algo, encut , nelm,nelmin, ediff, sigma,   lasph, lreal, addgrid, bmaxmix, bmix]
-    ionic_settings = [ediff, nsw, ibrion ,isif, isym, nblock, kblock]
-    magnetic_settings = [ispin, magmom, nupdown, saxis, lsorbit,noncollinear]
-    hubbard_settings = [ldau, ldatype, ldaul, dlauu, ldauj, lmaxmix]
-    hybrid_settings = [lhfcalc, precfock, nkred, algo, time, hflmax, hfscreen, aexx]
-    rho_decomp = [lpard, eint, dbmod, kpuse, iband]
-=======
 import numpy as np
 #import pymatgen as pg
 #import scipy as sp
 import os
 #from io import *
 
-class Calculation():
-    def __init__(self, calc_name, work_dir, structure, k_dim, pseudo_par , parallel = ["run_cl.sh", "nano", "etna", 24, 24, 24, 8, 4]):
-        """
-        Calculation superclass defines and produces the sequence of input files and directories
-        needed to compute a specified property in VASP. Input parameters, structure, pseudopotentials,
-        and degrees of freedom initially specified.
-        ** parallel = [jobname, machine, partition, nodes, ppn, maxtime, ncore, kpar]
-        **
-        **
+__author__ = 'Nima Leclerc'
+__email__ = 'nleclerc@lbl.gov'
 
-        """
-        assert type(calc_name) is str, "calc_name not a String!"
-        assert type(work_dir) is str, "work_dir not a String!"
-        assert type(structure) is Structure, "structure not a Structure!"
-        assert len(k_dim) == 3, "k_dim must have just 3 elements!"
-        assert len(pseudo_par) == 2, "pseudo_par must have 2 elements!"
-        assert len(parallel) == 8, "parallel must have 8 elements!"
+# class Calculation():
+#     def __init__(self, calc_name, work_dir, structure, k_dim, pseudo_par , parallel = ["run_cl.sh", "nano", "etna", 24, 24, 24, 8, 4]):
+#         """
+#         Calculation superclass defines and produces the sequence of input files and directories
+#         needed to compute a specified property in VASP. Input parameters, structure, pseudopotentials,
+#         and degrees of freedom initially specified.
+#         ** parallel = [jobname, machine, partition, nodes, ppn, maxtime, ncore, kpar]
+#         **
+#         **
+#
+#         """
+#         assert type(calc_name) is str, "calc_name not a String!"
+#         assert type(work_dir) is str, "work_dir not a String!"
+#         assert type(structure) is Structure, "structure not a Structure!"
+#         assert len(k_dim) == 3, "k_dim must have just 3 elements!"
+#         assert len(pseudo_par) == 2, "pseudo_par must have 2 elements!"
+#         assert len(parallel) == 8, "parallel must have 8 elements!"
+#
+#         try:
+#           os.mkdir(work_dir)
+#         except OSError as error:
+#           print("Directory not found, try another path.")
+#
+#         self._calc_settings = {"name": calc_name, "directory": work_dir}
+#         self._structure = struct
+#         self._pseudos = pseudo_par
+#         self._parallelization = parallel
+#
+#     def set_structure(self, structure):
+#         """Initializes structure for calculation"""
+#         self._structure_ = structure
 
-        try:
-          os.mkdir(work_dir)
-        except OSError as error:
-          print("Directory not found, try another path.")
+class InputParameters():
+        def __init__(self, name="input_param", start_settings=None,
+        parallel_settings=None, electronic_settings=None, magnetic_settings=None,
+        hybrid_settings=None, hubbard_settings=None, misc_settings=None):
+            """
+            Sets standard input parameters for a VASP calculation.
 
-        self._calc_settings = {"name": calc_name, "directory": work_dir}
-        self._structure = struct
-        self._pseudos = pseudo_par
-        self._parallelization = parallel
+            **Args:
 
-    def set_structure(self, structure):
-        """Initializes structure for calculation"""
-        self._structure_ = structure
+            name (str): name of input paramter settings [default = "input_param"]
+            start_settings (dict): start settings for calculation [default = ]
+            parallel_settings (dict): parallization settings for calculation [default = ]
+            electronic_settings (dict): electronic structure settings for calculation [default = ]
+            ionic_settings (dict): ionic settings for calculation, used for relaxations and structure optimization [default=None]
+            magnetic_settings (dict): magnetic structure settings for calculation [default=None]
+            hybrid_settings (dict): hybrid/hse settings for accurate band calculation [default=None]
+            hubbard_settings (dict): hubbard calculation settings for localized d/f orbital predicitons [default=None]
+            misc_settings_settings (dict): miscalaneous settings for calculation, can be any VASP setting [default=None]
 
-# class InputParamters():
-#         def __init__(self, ):
-#             """
-#             Calculation superclass defines and produces the sequence of input files and directories
-#             needed to compute a specified property in VASP. Input parameters, structure, pseudopotentials,
-#             and degrees of freedom initially specified.
-#             ** parallel = [jobname, machine, partition, nodes, ppn, maxtime, ncore, kpar]
-#             **
-#             **
-#             """
-#
+            """
 
-# class StartParmeters(InputParamters):
+            self._name = name
+            self._start_settings = start_settings or {"nwrite": , "istart": , "iniwav": , "icharg": , "nelect": , "lorbit": , "nedos": , "loptics": , "lelf":, "lvhar": , "rwigs": , "lvtof": }
+            self._parallel_settings = parallel_settings or {"flnm": , "job_name": , "machine":, "partition":, "nodes":  ,"ppn": , "ppn": , "max_time": , "ncore": , "kpar": }
+            self._electronic_settings = electronic_settings or  {"rec_level": , "algo":, "encut": ,"nelm": ,"nelmin":, "ediff":, "sigma": ,"lasph": , "lreal":, "addgrid": , "bmaxmix": , "bmix": }
+            self._ionic_settings = ionic_settings
+            self._magnetic_settings = magnetic_settings
+            self._hybrid_settings = hybrid_settings
+            self._hubbard_settings = hubbard_settings
+            self._misc_settings = misc_settings
+
+        def get_input_settings(self):
+            input_settings = {"name": name, "start": self._start_settings, "parallel": self._parallel_settings ,
+            "electronic": self._electronic_settings, "magnetic": self._magnetic_settings, "hybrid": self._hybrid_settings, "hubbard": self._hubbard_settings}
+            return input_settings
+
+        def update_start_settings(self, key, value):
+            if key in self._start_settings:
+                self._start_settings[key] = value
+                print "key" + "key changed to" + str(value)
+            else:
+                print "key does not exist!! keys include: {charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym}"
+
+        def update_parallel_settings(self, key, value):
+            if key in self._parallel_settings:
+                self._parallel_settings[key] = value
+                print "key" + "key changed to" + str(value)
+            else:
+                print "key does not exist!! keys include: {flnm , job_name , machine, partition, nodes  ,ppn, max_time , ncore,  kpar}"
+
+        def update_electronic_settings(self, key, value):
+            if key in self._electronic_settings:
+                self._electronic_settings[key] = value
+                print "key" + "key changed to" + str(value)
+            else:
+                print "key does not exist!! keys include: {prec_level, algo, encut , nelm,nelmin, ediff, sigma, lasph, lreal, addgrid, bmaxmix, bmix}"
+
+        def update_ionic_settings(self, key, value):
+            if self._ionic_settings:
+              if key in self._ionic_settings:
+                self._ionic_settings[key] = value
+                print "key" + "key changed to" + str(value)
+              else:
+                print "key does not exist!! keys include: {ediff ,nsw, ibrion ,isif, isym, nblock,  kblock}"
+            else:
+              print "magnetic settings not present!"
+
+        def update_magnetic_settings(self, key, value):
+            if self._magnetic_settings:
+              if key in self._magnetic_settings:
+                self._magnetic_settings[key] = value
+                print "key" + "key changed to" + str(value)
+              else:
+                print "key does not exist!! keys include: {ispin, magmom, nupdown, saxis, lsorbit,noncollinear}"
+            else:
+              print "magnetic settings not present!"
+
+        def update_hybrid_settings(self, key, value):
+            if self._hybrid_settings:
+              if key in self._hybrid_settings:
+                  self._hybrid_settings[key] = value
+                  print "key" + "key changed to" + str(value)
+              else:
+                  print "key does not exist!! keys include: {lhfcalc, precfock, nkred, algo, time, hflmax, hfscreen, aexx}"
+            else:
+              print "hybrid settings not present!"
+
+        def update_hubbard_settings(self, key, value):
+            if self._hubbard_settings:
+              if key in self._hubbard_settings:
+                  self._hubbard_settings[key] = value
+                  print "key" + "key changed to" + str(value)
+              else:
+                  print "key does not exist!! keys include: {ldau, ldatype, ldaul, dlauu, ldauj, lmaxmix}"
+           else:
+             print "hybrid settings not present!"
+
+
+# class DefaultOptimizationParameters(InputParameters):
 #         def __init__(self, ):
-#
-# class ParallelParmeters(InputParamters):
+
+
+# class DefaultSCFParameters(InputParameters):
 #         def __init__(self, ):
-#
-# class StartParmeters(InputParamters):
+
+# class DefaultSCFUParameters(InputParameters):
 #         def __init__(self, ):
-#
-# class ParallelParmeters(InputParamters):
+
+# class DefaultSCFHSEParameters(InputParameters):
 #         def __init__(self, ):
-# class StartParmeters(InputParamters):
+
+# class DefaultMagCLParameters(InputParameters):
 #         def __init__(self, ):
-#
-# class ParallelParmeters(InputParamters):
+
+# class DefaultMagNCLParameters(InputParameters):
 #         def __init__(self, ):
-# class StartParmeters(InputParamters):
+
+# class DefaultBandsParameters(InputParameters):
 #         def __init__(self, ):
-#
-# class ParallelParmeters(InputParamters):
-#         def __init__(self, ):
-#
+
+
+
+
 
 class RelaxationCalculation(Calculation):
     def __init__(self, relax_type, encut, nlec, nstep, work_dir, structure, k_dim, pseudo_list, epsilon=0.0001, nsteps=60, smear=0):
@@ -93,7 +177,7 @@ class RelaxationCalculation(Calculation):
         self._nsteps = nsteps
         self._epsilon = epsilon
         self._smear = smear
-        self._num_elec = structure._num_elec_
+        self._num_elec = structure._num_elec
         self._input = [self._relax_type, self._encut, self._nsteps, self._epsilon, self._smear, self._num_elec]
 
     def make_calculation(self):
@@ -374,4 +458,3 @@ class MagenticAnisotropyFlow(SerialComputeFlow):
         temp_calc = SCFCalculation(self._collinear_calc.algorithm_settings, self._collinear_calc.electronic_settings, temp_magnetic_settings, self._collinear_calc.hubbard_settings)
         calc_list.append(temp_calc)
         self._ncalc += 1
->>>>>>> 30706a417bcaf99403caec1fc7b4668de32c7f96
