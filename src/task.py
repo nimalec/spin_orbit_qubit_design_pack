@@ -54,6 +54,7 @@ class InputParameters:
             self._hubbard_settings = hubbard_settings
             self._misc_settings = misc_settings
 
+        @classmethod
         def get_input_settings(self):
             input_settings = {"name": name,
              "start": self._start_settings, "parallel": self._parallel_settings ,
@@ -61,6 +62,7 @@ class InputParameters:
             "hybrid": self._hybrid_settings, "hubbard": self._hubbard_settings, "misc_setting": self._misc_settings}
             return input_settings
 
+        @classmethod
         def update_start_settings(self, key, value):
             if key in self._start_settings:
                 self._start_settings[key] = value
@@ -68,6 +70,7 @@ class InputParameters:
             else:
                 print("key does not exist!! keys include: {charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym}")
 
+        @classmethod
         def update_parallel_settings(self, key, value):
             if key in self._parallel_settings:
                 self._parallel_settings[key] = value
@@ -75,6 +78,7 @@ class InputParameters:
             else:
                 print("key does not exist!! keys include: {flnm , job_name , machine, partition, nodes  ,ppn, max_time , ncore,  kpar}")
 
+        @classmethod
         def update_electronic_settings(self, key, value):
             if key in self._electronic_settings:
                 self._electronic_settings[key] = value
@@ -82,6 +86,7 @@ class InputParameters:
             else:
                 print("key does not exist!! keys include: {prec_level, algo, encut , nelm,nelmin, ediff, sigma, lasph, lreal, addgrid, bmaxmix, bmix}")
 
+        @classmethod
         def update_ionic_settings(self, key, value):
             if self._ionic_settings:
               if key in self._ionic_settings:
@@ -92,6 +97,7 @@ class InputParameters:
             else:
               print("magnetic settings not present!")
 
+        @classmethod
         def update_magnetic_settings(self, key, value):
             if self._magnetic_settings:
               if key in self._magnetic_settings:
@@ -102,6 +108,7 @@ class InputParameters:
             else:
               print("magnetic settings not present!")
 
+        @classmethod
         def update_hybrid_settings(self, key, value):
             if self._hybrid_settings:
               if key in self._hybrid_settings:
@@ -112,6 +119,7 @@ class InputParameters:
             else:
               print("hybrid settings not present!")
 
+        @classmethod
         def update_hubbard_settings(self, key, value):
             if self._hubbard_settings:
               if key in self._hubbard_settings:
@@ -234,20 +242,21 @@ class SCFCalculation():
 #
 
 
-     # def make_calculation(self, pseudo_path=None, struct_path=None, run_script_path=None):
-     #     """Sets input parameters for ground state calculation and makes files for calculation"""
-     #     os.mkdir(self._workdir)
-     #     print("Work Directory now in: " + self._workdir)
-     #     make_incar(self._workdir, self._input_settings)
-     #     make_poscar(self._workdir, self._structure)
-     #     make_potcar(self._workdir, self._pseudos)
-     #     make_runscript(self._workdir, self._parallelization)
+     def make_calculation(self, pseudo_path=None, struct_path=None, run_script_path=None):
+         """Sets input parameters for ground state calculation and makes files for calculation"""
+         os.mkdir(self._workdir)
+         print("Work Directory now in: " + self._workdir)
+         make_incar(self._workdir, self._input_settings)
+         make_poscar(self._workdir, self._structure)
+         make_potcar(self._workdir, self._pseudos)
+         make_runscript(self._workdir, self._parallelization)
 
-    #  def run_calculation(self):
-    #      os.system("sbatch")
-    #      self._run_status = "started"
-    #      self._jobid = os.system() ##retrieves job id
-    #
+
+     # def run_calculation(self):
+     #     os.system("sbatch")
+     #     self._run_status = "started"
+     #     self._jobid = os.system() ##retrieves job id
+
     # def update_calc_status(self):
     #  if self._jobid: ##if job has started
     #      def is_finished_h(self):
@@ -263,49 +272,49 @@ class SCFCalculation():
     #              self.self._run_status = "Finished"
     #          else:
     #              self._run_status= "Unfinished"
-    #
-    #  def get_total_energy(self):
-    #      energ_list = []
-    #      fl_nm = self._workdir + 'OUTCAR'
-    #      isfile = os.path.isfile(fl_nm)
-    #      if isfile == False:
-    #        print("OUTCAR file not present! try to re-run the calculation.")
-    #         pass
-    #      else:
-    #        with open(fl_nm, 'r') as f:
-    #          for line in f.readlines():
-    #            if 'TOTEN' in line:
-    #              energ_list.append(line)
-    #      tot_energ = energ_list[len(energ_list)-1]
-    #      return float(tot_energ[30:40])
-    #
-    #  def get_run_time(self):
-    #     fl_nm = self._workdir + 'OUTCAR'
-    #     isfile = os.path.isfile(fl_nm)
-    #     if isfile == False:
-    #         print("OUTCAR file not present! try to re-run the calculation.")
-    #         pass
-    #     else:
-    #        with open(fl_nm, 'r') as f:
-    #          for line in f.readlines():
-    #            if 'Total CPU time used (sec):' in line:
-    #                time_str = line
-    #     return float(time_str[49:57])
-    #
-    #
-    #  def get_fermi(self):
-    #      fl_nm = self._workdir + 'OUTCAR'
-    #      isfile = os.path.isfile(fl_nm)
-    #      if isfile == False:
-    #          print("OUTCAR file not present! try to re-run the calculation.")
-    #          pass
-    #      else:
-    #         with open(fl_nm, 'r') as f:
-    #           for line in f.readlines():
-    #             if 'E-fermi :' in line:
-    #                 fermi_str = line
-    #     return float(fermi_str[12:18])
-    #
+
+     def get_total_energy(self):
+         energ_list = []
+         fl_nm = self._workdir + 'OUTCAR'
+         isfile = os.path.isfile(fl_nm)
+         if isfile == False:
+           print("OUTCAR file not present! try to re-run the calculation.")
+            pass
+         else:
+           with open(fl_nm, 'r') as f:
+             for line in f.readlines():
+               if 'TOTEN' in line:
+                 energ_list.append(line)
+         tot_energ = energ_list[len(energ_list)-1]
+         return float(tot_energ[30:40])
+
+     def get_run_time(self):
+        fl_nm = self._workdir + 'OUTCAR'
+        isfile = os.path.isfile(fl_nm)
+        if isfile == False:
+            print("OUTCAR file not present! try to re-run the calculation.")
+            pass
+        else:
+           with open(fl_nm, 'r') as f:
+             for line in f.readlines():
+               if 'Total CPU time used (sec):' in line:
+                   time_str = line
+        return float(time_str[49:57])
+
+
+     def get_fermi(self):
+         fl_nm = self._workdir + 'OUTCAR'
+         isfile = os.path.isfile(fl_nm)
+         if isfile == False:
+             print("OUTCAR file not present! try to re-run the calculation.")
+             pass
+         else:
+            with open(fl_nm, 'r') as f:
+              for line in f.readlines():
+                if 'E-fermi :' in line:
+                    fermi_str = line
+        return float(fermi_str[12:18])
+
     #  def start_calculation(self):
     #      def is_finished_h(self):
     #          ## looks at output file to check if finished

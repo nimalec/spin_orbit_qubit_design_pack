@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import shutil
+from structure import *
 
 def make_runscript_h(work_dir, input_settings):
     """
@@ -13,6 +14,10 @@ def make_runscript_h(work_dir, input_settings):
     """
     run_settings = input_settings._parallel_settings
     fl_nm = run_settings["flnm"]
+    if os.path.exists(work_dir+fl_nm) is True:
+        os.remove(work_dir+fl_nm)
+    else:
+        pass
 
     f=open(fl_nm, "w")
     f.write("#!/bin/bash" + "\n\n")
@@ -44,7 +49,12 @@ def make_incar_h(work_dir, input_settings):
     """
 
     fl_nm = "INCAR"
+    if os.path.exists(work_dir+fl_nm) is True:
+        os.remove(work_dir+fl_nm)
+    else:
+        pass
     f=open(fl_nm, "w")
+
     #f.write("SYSTEM="+  +"\n\n")
     f.write("start parameters"+"\n")
 
@@ -75,7 +85,6 @@ def make_incar_h(work_dir, input_settings):
             else:
                 pass
         f.write("\n")
-
 
     if input_settings._magnetic_settings:
         f.write("magnetic"+"\n")
@@ -117,8 +126,6 @@ def make_incar_h(work_dir, input_settings):
     shutil.move(fl_nm, work_dir)
     os.system("rm -r __pycache__")
 
-
-
 def make_potcar_h(work_dir, pseudo_par):
     """
     Generates VASP POTCAR file for VASP calculation.
@@ -137,13 +144,72 @@ def make_potcar_h(work_dir, pseudo_par):
         paths.append(pseudo_path)
     files = " ".join(paths)
     os.system("cat"+files+">> POTCAR")
+    shutil.move("POTCAR", work_dir)
 
-# def make_poscar_h(work_dir, structure):
-#     """
-#     Generates VASP POSCAR file for VASP calculation.
-#
-#     **Args:
-#
-#     structure (Structure):
-#     workdir (str):
-#     """
+def make_poscar_h(work_dir, structure, number, species, name=None):
+    """
+    Generates VASP POSCAR file for VASP calculation.
+
+    **Args:
+
+    structure (Structure):
+    workdir (str):
+    """
+    sites = structure._sites
+    lattice = structure._lattice
+    name = name or structure._name
+    number = [str(num) for num in number]
+    species_line = " ".join(species)
+    number_line = " ".join(number)
+
+    fl_nm = "POSCAR"
+    if os.path.exists(work_dir+"/"+fl_nm) is True:
+        os.remove(work_dir+"/"+fl_nm)
+    else:
+        pass
+
+    f=open(fl_nm, "w+")
+    f.write(name+"\n")
+    f.write(str(1)+"\n")
+    f.write(str(lattice[0][0])+"  "+str(lattice[0][1])+"  "+str(lattice[0][2])+"\n")
+    f.write(str(lattice[1][0])+"  "+str(lattice[1][1])+"  "+str(lattice[1][2])+"\n")
+    f.write(str(lattice[2][0])+"  "+str(lattice[2][1])+"  "+str(lattice[2][2])+"\n")
+    f.write(species_line+"\n")
+    f.write(number_line+"\n")
+    f.write("Direct"+"\n")
+    for site in sites:
+        coord = site._coord
+        coord_line = str(coord[0])+"  "+str(coord[1])+"  "+str(coord[2])+"\n"
+        f.write(coord_line)
+
+    f.close()
+    shutil.move("POSCAR", work_dir)
+    os.system("rm -r __pycache__")
+
+# latt_ = np.array([[1.000,0,0], [0,1,0], [0,0,1]])
+# coord_ = np.array([[1,1,1],[1,1,1]])
+# struct_ = Structure(lattice=latt_, species=["Na" , "Cl"], coords=coord_)
+# make_poscar_h("/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/", struct_, [1,1], ["Na", "Cl"])
+
+
+def make_kpoints_h(work_dir, kmesh, qshift=None):
+    """
+    Generates VASP POSCAR file for VASP calculation.
+
+    **Args:
+    workdir (str):
+    kmesh (list):
+    qmesh (list):
+    """
+    fl_nm = "KPOINTS"
+    f=open(fl_nm, "w+")
+    f.write("Automatic mesh \n")
+    f.write(str(0)+"\n")
+    f.write(str(kmesh[0])+" "+str(kmesh[1])+" "+str(kmesh[2])+"\n")
+    if qshift:
+       f.write(str(qmesh[0])+" "+str(qmesh[1])+" "+str(qmesh[2])+"\n")
+    else:
+        f.write(str(0)+" "+str(0)+" "+str(0)+"\n")
+    f.close()
+pwd = os.getcwd()
+make_kpoints_h(pwd, [2,2,2])
