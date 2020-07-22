@@ -3,6 +3,9 @@ import os
 import shutil
 from structure import *
 
+__author__ = 'Nima Leclerc'
+__email__ = 'nleclerc@lbl.gov'
+
 def make_runscript_h(work_dir, input_settings):
     """
     Generates runscript provided run settings for VASP calculation.
@@ -16,8 +19,6 @@ def make_runscript_h(work_dir, input_settings):
     fl_nm = run_settings["flnm"]
     if os.path.exists(work_dir+fl_nm) is True:
         os.remove(work_dir+fl_nm)
-    else:
-        pass
 
     f=open(fl_nm, "w")
     f.write("#!/bin/bash" + "\n\n")
@@ -36,15 +37,16 @@ def make_runscript_h(work_dir, input_settings):
     f.write("exit 0\n\n")
     f.close()
     shutil.move(fl_nm, work_dir)
-    os.system("rm -r __pycache__")
+    if os.path.exists("__pycache__") is True:
+       os.system("rm -r __pycache__")
 
-def make_incar_h(work_dir, input_settings):
+def make_incar_h(work_dir, input_settings,name="system"):
     """
     Generates VASP INCAR file for VASP calculation.
 
     **Args:
 
-     workdir (str):
+    workdir (str):
     input_settings (InputParameters):
     """
 
@@ -55,7 +57,7 @@ def make_incar_h(work_dir, input_settings):
         pass
     f=open(fl_nm, "w")
 
-    #f.write("SYSTEM="+  +"\n\n")
+    f.write("SYSTEM="+name+"\n\n")
     f.write("start parameters"+"\n")
 
     for key in input_settings._start_settings:
@@ -90,25 +92,41 @@ def make_incar_h(work_dir, input_settings):
         f.write("magnetic"+"\n")
         for key in input_settings._magnetic_settings:
             if input_settings._magnetic_settings[key]:
-                f.write(key+"="+str(input_settings._magnetic_settings[key])+"\n")
+                if key == "SAXIS":
+                    saxis = input_settings._magnetic_settings[key]
+                    saxis_line = str(saxis[0])+" "+str(saxis[1])+" "+str(saxis[2])
+                    f.write(key+"="+saxis_line+"\n")
+                elif key == "MAGMOM":
+                    magmom_line = " "
+                    for i in input_settings._magnetic_settings[key]:
+                        magmom_line += str(i)+ "  "
+                    f.write(key+"="+str(input_settings._magnetic_settings[key])+"\n")
+                else:
+                   f.write(key+"="+str(input_settings._magnetic_settings[key])+"\n")
             else:
                 pass
             f.write("\n")
 
-    if input_settings._hybrid_settings:
-        f.write("hybrid"+"\n")
-        for key in input_settings._hybrid_settings:
-            if input_settings._hybrid_settings[key]:
-                f.write(key+"="+str(input_settings._hybrid_settings[key])+"\n")
-            else:
-                pass
-        f.write("\n")
+    # if input_settings._hybrid_settings:
+    #     f.write("hybrid"+"\n")
+    #     for key in input_settings._hybrid_settings:
+    #         if input_settings._hybrid_settings[key]:
+    #             f.write(key+"="+str(input_settings._hybrid_settings[key])+"\n")
+    #         else:
+    #             pass
+    #     f.write("\n")
 
     if input_settings._hubbard_settings:
         f.write("hubbard"+"\n")
         for key in input_settings._hubbard_settings:
             if input_settings._hubbard_settings[key]:
-                f.write(key+"="+str(input_settings._hubbard_settings[key])+"\n")
+                if key == "LDAUL" or key == "LDAUU" or key == "LDAUJ":
+                    line = " "
+                    for i in input_settings._hubbard_settings[key]:
+                        line += str(i)+ "  "
+                    f.write(key+"="+line+"\n")
+                else:
+                    f.write(key+"="+str(input_settings._hubbard_settings[key])+"\n")
             else:
                 pass
         f.write("\n")
@@ -124,7 +142,8 @@ def make_incar_h(work_dir, input_settings):
 
     f.close()
     shutil.move(fl_nm, work_dir)
-    os.system("rm -r __pycache__")
+    if os.path.exists("__pycache__") is True:
+       os.system("rm -r __pycache__")
 
 def make_potcar_h(work_dir, pseudo_par):
     """
@@ -135,7 +154,7 @@ def make_potcar_h(work_dir, pseudo_par):
     workdir (str):
     pseudo_par (dict):
     """
-    pseudo_dir = pseudo_par["dir"]
+    pseudo_dir = pseudo_par["directory"]
     pseudos = pseudo_par["flavor"]
 
     paths = []
@@ -165,8 +184,6 @@ def make_poscar_h(work_dir, structure, number, species, name=None):
     fl_nm = "POSCAR"
     if os.path.exists(work_dir+"/"+fl_nm) is True:
         os.remove(work_dir+"/"+fl_nm)
-    else:
-        pass
 
     f=open(fl_nm, "w+")
     f.write(name+"\n")
@@ -184,13 +201,8 @@ def make_poscar_h(work_dir, structure, number, species, name=None):
 
     f.close()
     shutil.move("POSCAR", work_dir)
-    os.system("rm -r __pycache__")
-
-# latt_ = np.array([[1.000,0,0], [0,1,0], [0,0,1]])
-# coord_ = np.array([[1,1,1],[1,1,1]])
-# struct_ = Structure(lattice=latt_, species=["Na" , "Cl"], coords=coord_)
-# make_poscar_h("/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/", struct_, [1,1], ["Na", "Cl"])
-
+    if os.path.exists("__pycache__") is True:
+       os.system("rm -r __pycache__")
 
 def make_kpoints_h(work_dir, kmesh, qshift=None):
     """
@@ -202,14 +214,14 @@ def make_kpoints_h(work_dir, kmesh, qshift=None):
     qmesh (list):
     """
     fl_nm = "KPOINTS"
-    f=open(fl_nm, "w+")
+    f=open(work_dir+"/"+fl_nm, "w+")
     f.write("Automatic mesh \n")
     f.write(str(0)+"\n")
-    f.write(str(kmesh[0])+" "+str(kmesh[1])+" "+str(kmesh[2])+"\n")
+    f.write(str(kmesh[0])+"  "+str(kmesh[1])+"  "+str(kmesh[2])+"\n")
     if qshift:
-       f.write(str(qmesh[0])+" "+str(qmesh[1])+" "+str(qmesh[2])+"\n")
+       f.write(str(qmesh[0])+"  "+str(qmesh[1])+"  "+str(qmesh[2])+"\n")
     else:
-        f.write(str(0)+" "+str(0)+" "+str(0)+"\n")
+        f.write(str(0)+"  "+str(0)+"  "+str(0)+"\n")
     f.close()
-pwd = os.getcwd()
-make_kpoints_h(pwd, [2,2,2])
+    if os.path.exists("__pycache__") is True:
+       os.system("rm -r __pycache__")

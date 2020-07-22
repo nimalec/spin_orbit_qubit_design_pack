@@ -2,8 +2,12 @@ import numpy as np
 import scipy as sp
 import pymatgen as pg
 
+__author__ = 'Nima Leclerc'
+__email__ = 'nleclerc@lbl.gov'
+
+
 class Site:
-    def __init__(self, species, coord, charge=None, mag_moment=np.array([0,0,0]), isdefect=False):
+    def __init__(self, species, coord, site_idx = None, charge=None, mag_moment=np.array([0,0,0]), isdefect=False):
         """
         Initializes site objects specifying chemistry and position.
 
@@ -11,12 +15,14 @@ class Site:
 
         species (str): element symbol, must be a valid element symbol in the periodic table
         coord (ndarray): fractional coordinate of atom in lattice site
+        site_idx (int): site index
         charge (float or int): charge state of element  [default = maximum oxidation number of element]
         mag_moment (ndarray): orientation of magnetic moment [default = None]
         isdefect(bool): True if defect site in lattice [default = False]
         """
         import pymatgen as pg
         assert isinstance(species, str), "species must be a string!!"
+
         try:
             elem = pg.core.periodic_table.Element(species)
         except ValueError:
@@ -34,8 +40,9 @@ class Site:
 
         assert isinstance(mag_moment, np.ndarray), "magmom must be an numpy array!"
         assert len(mag_moment)==3, "magbetic moment be length 3!!"
-        self._mag_moment = mag_moment
 
+        self._mag_moment = mag_moment
+        self._site_idx = site_idx or 1
         self._species = species
         self._coord = coord
         elem = pg.core.periodic_table.Element(species)
@@ -53,7 +60,7 @@ class Site:
         assert isinstance(displacement, np.ndarray), "must be an ndarray!"
         assert len(displacement)==3, "displacement must be length 3!"
         temp = self._coord
-        self._coord = temp +  displacement
+        self._coord = temp + displacement
 
     @classmethod
     def set_charge(self, charge):
@@ -112,24 +119,48 @@ class Site:
         """Getter function for charge state of site"""
         return self._charge
 
-# spec_ = "Mn"
-# coord_ = np.array([1,0,1])
-# moment_ = np.array([1,0,0])
-# site_ = Site(spec_, coord_, mag_moment = moment_)
+    @property
+    def defect(self):
+        """Getter function for charge state of site"""
+        return self._isdefect
 
 class Structure:
     def __init__(self, lattice, species=None,
-     coords=None, sites=None, basis=None, space_group=None, charge=None, defects=None, scale_matrix=None, nelect=None, name=None):
-        """Class Lattice defined by a set of Atoms in an irreducible representation"""
+     coords=None, sites=None, basis=None, space_group=None, defects=None, scale_matrix=None, name=None):
+
+        """Class Structure defined by collective set of sites and lattice. Sites can either be provided with species list and coords list seperatley
+         or list of sites (type Sites)
+        **Args:
+
+        lattice (ndarray): lattice describing structure in crystallagraphic system
+        species (list): list of species in structure [default = None]
+        coords (list): list of coordinates in structure [default = None]
+        sites (list): list of sites in structure [default = None]
+        basis (list): list of basis sites [default = initialized list of sites]
+        space_group (int): space group number describing symmetry of structure [default = None]
+        defects (list): list of defect site [default = None]
+        scale_matrix (ndarray): 3x3 matrix respresenting size of supercell [default = [[1,0,0],[0,1,0],[0,0,1]]]
+        name (str): name of structure [default="struct"]
+        """
 
         self._name = name or "struct"
         assert isinstance(lattice, np.ndarray)
         assert np.shape(lattice) == (3,3)
         self._lattice = lattice
+        defect_lst = []
         if sites:
+            itr = 1
             for site in sites:
                 assert isinstance(site, Site), "site must be of type Site!!"
+                site._site_idx = itr
+                itr += 1
+                if site._isdefect == True:
+                   defect_lst.append(site)
+                   continue
+                else:
+                   continue
             self._sites = sites
+
         elif species:
             assert len(coords) == len(species), "coords and species must be the same length"
             sites = []
@@ -144,12 +175,24 @@ class Structure:
         else:
             print("Must provide input as either sites or both coordinates and species to generate structure!!")
 
-        #self._sites = sites
-        self._basis = basis or self._sites
-        self._defects = defects
-        self._space_group = space_group
+        if basis:
+           for site in self._basis:
+               assert isinstance(site, Site), "basis must be a list of Site objects!!"
+           self._basis = basis
+
+        else:
+          self._basis = self._sites
+
+        self._defects = defects or defect_lst
+
+        if space_group:
+            assert isinstance(space_group, int) and space_group >= 1 and space_group <= 230, "space group must be an integer"
+            self._space_group = space_group
+        else:
+            self._space_group = 0
+
         self._dimensions = scale_matrix or np.array([[1,0,0], [0,1,0], [0,0,1]])
-        #self._nelect = nelect 
+        self._natoms = len(self._sites)
 
     #non-default constructor
     # def from_sg(self, lattice, basis, space_group):
@@ -178,6 +221,6 @@ class Structure:
     #         self._sites.append(temp_site)
 
     # @classmethod
-    # def add_atom(self, site):
+    # def add_site(self, site):
     #     assert type(site) is Site, "site must be of type Site"
     #     self._sites.append(site)

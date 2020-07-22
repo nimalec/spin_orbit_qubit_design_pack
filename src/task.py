@@ -2,9 +2,10 @@ import numpy as np
 #import pymatgen as pg
 #import scipy as sp
 import os
-#from timer import Timer
+#from timer import Timer,
 #import time
-from in_out import make_runscript_h, make_incar_h
+from in_out import *
+from shutil import copyfile
 
 __author__ = 'Nima Leclerc'
 __email__ = 'nleclerc@lbl.gov'
@@ -39,55 +40,90 @@ class InputParameters:
             """
 
             self._name = name or "input_param"
-            self._start_settings = start_settings or {"nwrite": 2, "istart": 1, "iniwav": 1,
-             "icharg": None, "nelect": None, "lorbit": 11,
-              "nedos": 1000, "loptics": False, "lelf": None, "lvhar": None, "rwigs": None, "lvtof": None}
+            self._start_settings = start_settings or {"NWRITE": 2, "ISTART": 1, "INIWAV": 1,
+             "ICHARG": None, "NELECT": None, "LORBIT": 11,
+              "NEDOS": 1000, "LOPTICS": ".FALSE.", "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None}
             self._parallel_settings = parallel_settings or {"flnm": "run_scf.sh", "job_name": "scf_std", "machine": "nano" ,
              "partition": "etna", "nodes": 4,"ppn": 24,
               "max_time": "24:00:00", "ncore": 8, "kpar": 2, "exec": "vasp_std"}
-            self._electronic_settings = electronic_settings or  {"algo": "Normal", "encut": 800,
-            "nelm": 200, "nelmin": 4, "ediff": 10E-5, "ismear": 1,
-            "sigma": 0.2,"lasph": True, "lreal": "Auto", "addgrid": True, "maxmix": 100, "bmix": 1.5}
+            self._electronic_settings = electronic_settings or  {"ALGO": "Normal", "ENCUT": 800,
+            "NELM": 200, "NELMIN": 4, "EDIFF": 10E-05, "ISMEAR": 1,
+            "SIGMA": 0.2, "LASPH": ".TRUE.", "LREAL": "Auto", "ADDGRID": ".TRUE.", "MAXMIX": 100, "BMIX": 1.5}
             self._ionic_settings = ionic_settings
             self._magnetic_settings = magnetic_settings
             self._hybrid_settings = hybrid_settings
             self._hubbard_settings = hubbard_settings
             self._misc_settings = misc_settings
 
-        @classmethod
         def get_input_settings(self):
+
+            """Getter function for Vasp Input paramters"""
+
             input_settings = {"name": name,
              "start": self._start_settings, "parallel": self._parallel_settings ,
             "electronic": self._electronic_settings, "magnetic": self._magnetic_settings,
             "hybrid": self._hybrid_settings, "hubbard": self._hubbard_settings, "misc_setting": self._misc_settings}
             return input_settings
 
-        @classmethod
         def update_start_settings(self, key, value):
+
+            """
+            Update a parameter in start settings.
+
+            **Args:
+
+            key (str): key in start settings
+            value : value corresponding to updated key
+            """
+
             if key in self._start_settings:
                 self._start_settings[key] = value
                 print("key" + "key changed to" + str(value))
             else:
                 print("key does not exist!! keys include: {charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym}")
 
-        @classmethod
         def update_parallel_settings(self, key, value):
+
+            """
+            Update a parameter in parallel settings.
+
+            **Args:
+
+            key (str): key in parallel settings
+            value : value corresponding to updated key
+            """
+
             if key in self._parallel_settings:
                 self._parallel_settings[key] = value
                 print("key" + "key changed to" + str(value))
             else:
                 print("key does not exist!! keys include: {flnm , job_name , machine, partition, nodes  ,ppn, max_time , ncore,  kpar}")
 
-        @classmethod
         def update_electronic_settings(self, key, value):
+            """
+            Update a parameter in electronic settings.
+
+            **Args:
+
+            key (str): key in electronic settings
+            value : value corresponding to updated key
+            """
+
             if key in self._electronic_settings:
                 self._electronic_settings[key] = value
                 print("key" + "key changed to" + str(value))
             else:
                 print("key does not exist!! keys include: {prec_level, algo, encut , nelm,nelmin, ediff, sigma, lasph, lreal, addgrid, bmaxmix, bmix}")
 
-        @classmethod
         def update_ionic_settings(self, key, value):
+            """
+            Update a parameter in ionic settings.
+
+            **Args:
+
+            key (str): key in ionic settings
+            value : value corresponding to updated key
+            """
             if self._ionic_settings:
               if key in self._ionic_settings:
                 self._ionic_settings[key] = value
@@ -97,8 +133,17 @@ class InputParameters:
             else:
               print("magnetic settings not present!")
 
-        @classmethod
         def update_magnetic_settings(self, key, value):
+
+            """
+            Update a parameter in magnetic settings.
+
+            **Args:
+
+            key (str): key in magnetic settings
+            value : value corresponding to updated key
+            """
+
             if self._magnetic_settings:
               if key in self._magnetic_settings:
                 self._magnetic_settings[key] = value
@@ -108,19 +153,37 @@ class InputParameters:
             else:
               print("magnetic settings not present!")
 
-        @classmethod
-        def update_hybrid_settings(self, key, value):
-            if self._hybrid_settings:
-              if key in self._hybrid_settings:
-                  self._hybrid_settings[key] = value
-                  print("key" + "key changed to" + str(value))
-              else:
-                  print("key does not exist!! keys include: {lhfcalc, precfock, nkred, algo, time, hflmax, hfscreen, aexx}")
-            else:
-              print("hybrid settings not present!")
+        # def update_hybrid_settings(self, key, value):
+        #
+        #     """
+        #     Update a parameter in electronic settings.
+        #
+        #     **Args:
+        #
+        #     key (str): key in electronic settings
+        #     value : value corresponding to updated key
+        #     """
+        #
+        #     if self._hybrid_settings:
+        #       if key in self._hybrid_settings:
+        #           self._hybrid_settings[key] = value
+        #           print("key" + "key changed to" + str(value))
+        #       else:
+        #           print("key does not exist!! keys include: {lhfcalc, precfock, nkred, algo, time, hflmax, hfscreen, aexx}")
+        #     else:
+        #       print("hybrid settings not present!")
 
-        @classmethod
         def update_hubbard_settings(self, key, value):
+
+            """
+            Update a parameter in Hubbard settings.
+
+            **Args:
+
+            key (str): key in Hubbard settings
+            value : value corresponding to updated key
+            """
+
             if self._hubbard_settings:
               if key in self._hubbard_settings:
                   self._hubbard_settings[key] = value
@@ -132,47 +195,52 @@ class InputParameters:
 
 
 class DefaultOptimizationParameters(InputParameters):
-        def __init__(self, encut, name='relax_settings'):
+        def __init__(self, encut, name="relax_settings"):
             """
-            Sets standard input parameters for a VASP calculation.
+            Sets default input parameters for optimization
 
             **Args:
 
-            encut (flt): planewave energy cutoff for calculation
-            name (str): name for relaxation setting
+            encut (float): planewave energy cutoff for calculation
+            name (str): name for relaxation setting [default="relax_settings"]
 
             """
 
-            ionic = {"ediff": 1E-17, "nsw": 20, "ibrion": 2,"isif": 2, "isym": -1, "nblock": 1,  "kblock": 20}
+            ionic = {"EDIFF": 1E-17, "NSW": 20, "IBRION": 2,"ISIF": 2, "ISYM": -1, "NBLOCK": 1,  "KBLOCK": 20}
             InputParameters.__init__(self, ionic_settings=ionic, name=name)
-            self.update_electronic_settings("encut", encut)
+            self.update_electronic_sttings("ENCUT", encut)
+
+
 
 class DefaultSCFParameters(InputParameters):
-         def __init__(self, encut, name='scf_settings'):
+         def __init__(self, encut, name="scf_settings"):
              """
-             Sets standard input parameters for a VASP calculation.
+             Sets default input parameters for scf ground state energy calculation
 
              **Args:
-               encut (flt): planewave energy cutoff for calculation
-               name (str): name for relaxation setting
+               encut (float): planewave energy cutoff for calculation
+               name (str): name for scf setting [default="scf_settings"]
 
              """
              InputParameters.__init__(self, name=name)
-             self.update_electronic_settings("encut", encut)
+             self.update_electronic_settings("ENCUT", encut)
 
 class DefaultSCFUParameters(InputParameters):
-         def __init__(self, encut, ldaul, Uparam, Jparam, name='DFTU_settings'):
+         def __init__(self, encut, ldaul, Uparam, Jparam, name="DFTU_settings"):
              """
-             Sets standard input parameters for a VASP calculation.
+             Sets default input parameters for scf ground state energy calculation with +U correction
 
-             encut (flt): planewave energy cutoff for calculation
-             name (str): name for relaxation setting
+             encut (float): planewave energy cutoff for calculation
+             ldaul (list): list of  orbital types for each species
+             Uparam (list): list of U parameters for each species
+             Jparam (list): list of J paramters for each species
+             name (str):  name for scf+U setting [default="DFTU_settings"]
 
              """
 
-             dftu_settings = {"ldau": Uparam, "ldatype": 2, "ldaul": ldaul, "ldauj": Jparam , "lmaxmix": 4}
+             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LADAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
              InputParameters.__init__(self, name=name, hubbard_settings=dftu_settings)
-             self.update_electronic_settings("encut", encut)
+             self.update_electronic_settings("ENCUT", encut)
 
 # class DefaultSCFHSEParameters(InputParameters):
 #         def __init__(self):
@@ -180,49 +248,58 @@ class DefaultSCFUParameters(InputParameters):
 
 
 class DefaultMagCLParameters(InputParameters):
-         def __init__(self, encut, magmom, ldaul, Uparam, Jparam, name='DFTCL_settings'):
+         def __init__(self, encut, magmom, ldaul, Uparam, Jparam, name="DFTCL_settings"):
              """
-             Sets standard input parameters for a VASP calculation.
+             Sets default input parameters for scf spin collinear calculation
 
              encut (flt): planewave energy cutoff for calculation
-             name (str): name for relaxation setting
+             magmom (list): list of magnetic moments for each species
+             ldaul (list): list of  orbital types for each species
+             Uparam (list): list of U parameters for each species
+             Jparam (list): list of J paramters for each species
+             name (str):  name for magnetic noncolinear calculation setting [default="DFTCL_settings"]
 
              """
 
-             cl_settings =  {"ispin": 2, "magmom": magmom, "saxis": None, "lsorbit": None, "noncollinear": None}
-             dftu_settings = {"ldau": Uparam, "ldatype": 2, "ldaul": ldaul, "ldauj": Jparam , "lmaxmix": 4}
+             cl_settings =  {"ISPIN": 2, "MAGMOM": magmom, "SAXIS": None, "LSORBIT": None, "LNONCOLLINEAR": None}
+             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIMX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=cl_settings, hubbard_settings=dftu_settings)
              self.update_electronic_settings("encut", encut)
 
 class DefaultMagNCLParameters(InputParameters):
          def __init__(self, encut, spinaxis, ldaul, Uparam, Jparam, name='DFTCL_settings'):
              """
-             Sets standard input parameters for a VASP calculation.
+            Sets default input parameters for scf spin non-collinear calculation
 
              encut (flt): planewave energy cutoff for calculation
-             name (str): name for relaxation setting
-
+             spinaxis (ndarray): spinaxis  for calculation
+             ldaul (list): list of  orbital types for each species
+             Uparam (list): list of U parameters for each species
+             Jparam (list): list of J paramters for each species
+             name (str):  name for magnetic noncolinear calculation setting [default="DFTNCL_settings"]
              """
-             ncl_settings =  {"ispin": 2, "magmom": None, "saxis": True, "lsorbit": True, "noncollinear": True}
-             dftu_settings = {"ldau": Uparam, "ldatype": 2, "ldaul": ldaul, "ldauj": Jparam , "lmaxmix": 4}
+             ncl_settings =  {"ISPIN": 2, "MAGMOM": None, "SAXIS": spinaxis, "LSORBIT": ".TRUE.", "LNONCOLLINEAR": ".TRUE."}
+             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=ncl_settings, hubbard_settings=dftu_settings)
-             self.update_electronic_settings("encut", encut)
+             self.update_electronic_settings("ENCUT", encut)
 
 class SCFCalculation():
-     def __init__(self, structure, workdir, kgrid, pseudo_par, name="scf_calc", encut=600, input_parameters=None):
+     def __init__(self, workdir, pseudo_par, kgrid=None, structure=None, name="scf_calc", encut=600, input_parameters=None):
          """
          Sets standard input parameters for a VASP calculation.
 
          **Args:
 
-         structure (Structure):
-         workdir (str):
-         kgrid (list):
-         pseudo_par (dict):
-         name (str):
-         input_paramters (InputParameters):
-         encut (flt):
+         workdir (str): workdirectory for scf calculation
+         pseudo_par (dict): pseudopotential parameters {"directory":  , "flavor":[]}
+         kgrid (list): kgrid for calculation
+         structure (Structure): structure for scf calculation
+         name (str): calculation name [default="scf_calc"]
+         encut (float): planewave energy cutoff
+         input_paramters (InputParameters): input paramters for scf calculation [defualt=DefaultSCFParameters(encut)]
+
          """
+
          self._name  = name
          self._workdir = workdir
          self._structure = structure
@@ -235,27 +312,59 @@ class SCFCalculation():
          self._tot_energy = None
          self._fermi = None
 
+     def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None):
+         """
+         Sets up VASP input files and directory
 
-# input_settings = DefaultSCFParameters(encut=300)
-# work_dir = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack"
-# make_incar_h(work_dir, input_settings)
-#
+         **Args:
 
+         struct_path (str): path (including POSCAR file) of availible POSCAR in external directory
+         run_script_path (str): path (including runscript file) of availible runscript in external directory
+         k_points_path (str): path (including kpoints file) of availible kpoints file in external directory
 
-     def make_calculation(self, pseudo_path=None, struct_path=None, run_script_path=None):
-         """Sets input parameters for ground state calculation and makes files for calculation"""
+         """
+
          os.mkdir(self._workdir)
          print("Work Directory now in: " + self._workdir)
-         make_incar(self._workdir, self._input_settings)
-         make_poscar(self._workdir, self._structure)
-         make_potcar(self._workdir, self._pseudos)
-         make_runscript(self._workdir, self._parallelization)
+         make_incar_h(self._workdir, self._input_settings)
+         make_potcar_h(self._workdir, self._pseudo_par)
+
+         if struct_path:
+            copyfile(struct_path, self._workdir+"/"+"POSCAR")
+         else:
+             make_poscar_h(self._workdir, self._structure, [4], ["Mn"])
+
+         if run_script_path:
+             copyfile(run_script_path, self._workdir+"/"+"run_scf.sh")
+         else:
+             make_runscript_h(self._workdir, self._input_settings)
+
+         if k_points_path:
+             copyfile(k_points_path, self._workdir+"/"+"KPOINTS")
+         else:
+             make_kpoints_h(self._workdir, self._kmesh)
+
+         if os.path.exists("__pycache__") is True:
+            os.system("rm -r __pycache__")
 
 
-     # def run_calculation(self):
-     #     os.system("sbatch")
-     #     self._run_status = "started"
-     #     self._jobid = os.system() ##retrieves job id
+#workdir_ = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_calc_v2"
+#struct_path ="/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_calc/POSCAR"
+# lattice_ = np.array([[1.32,0.00,0.00],[1.36,1.45,0.00],[1.3,0.00,6.64]])
+# spec_ = "Mn"
+# site1_ = Site(spec_, np.array([1,0,1]))
+# site2_ = Site(spec_, np.array([1,0,0]))
+# site3_ = Site(spec_, np.array([0,0,0]))
+# site4_ = Site(spec_, np.array([1,1,1]))
+# sites_ = [site1_, site2_,  site3_, site4_]
+# structure_ = Structure(lattice=lattice_, sites=sites_)
+#calc_ = SCFCalculation(workdir=workdir_, kgrid=np.array([1,1,1]))
+#calc_.make_calculation(struct_path=struct_path)
+
+     def run_calculation(self):
+         os.system("sbatch"+" "+self._input_settings._parallel_settings["flnm"])
+         self._run_status = "started"
+         #self._jobid = os.system() ##retrieves job id
 
     # def update_calc_status(self):
     #  if self._jobid: ##if job has started
@@ -315,29 +424,29 @@ class SCFCalculation():
                     fermi_str = line
         return float(fermi_str[12:18])
 
-    #  def start_calculation(self):
-    #      def is_finished_h(self):
-    #          ## looks at output file to check if finished
-    #          if "General timing" is present in OUTCAR:
-    #            return true
-    #          else:
-    #              return false
-    #
-    #      self.make_calculation()
-    #      self.run_calculation()
-    #      start = time.time()
-    #      while self.s_finished_h() is True:
-    #          calc_time = time.time() - start
-    #          if calc_time < 30:
-    #              pass
-    #          else:
-    #              if int(calc_time)%30 !=0:
-    #                  pass
-    #              else:
-    #                  self.update_calc_status()
-    #      self._cputime = self.get_run_time()
-    #      self._tot_energy = self.get_total_energy()
-    #      self._fermi = self.get_fermi()
+     # def start_calculation(self):
+     #     def is_finished_h(self):
+     #         ## looks at output file to check if finished
+     #         if "General timing" is present in OUTCAR:
+     #           return true
+     #         else:
+     #             return false
+     #
+     #     self.make_calculation()
+     #     self.run_calculation()
+     #     start = time.time()
+     #     while self.s_finished_h() is True:
+     #         calc_time = time.time() - start
+     #         if calc_time < 30:
+     #             pass
+     #         else:
+     #             if int(calc_time)%30 !=0:
+     #                 pass
+     #             else:
+     #                 self.update_calc_status()
+     #     self._cputime = self.get_run_time()
+     #     self._tot_energy = self.get_total_energy()
+     #     self._fermi = self.get_fermi()
 
 # class BandCalculation(Calculation):
 #         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
@@ -414,9 +523,6 @@ class SCFCalculation():
 #         self._ncalc = 0
 #         self._param_list = []
 #         self._calc_list = []
-#
-#     def make_serial_runscript(self):
-
 
     # def setup_calc_series(self):
     #     os.chdir(self._workdir)
@@ -483,30 +589,57 @@ class SCFCalculation():
     #     self._dos_ =
     #     super(SerialComputeFlow, self).__init__(inialized inputs, )
 
-# class MagenticAnisotropyFlow(SerialComputeFlow):
-#
-#     def __init__(self, cl_calc, polar_range, azimuth_range, ref_orient):
-#         """
-#         Sets up a serial set of compuations which iterate over a desired degree of freedom
-#         (i.e. strain, dopant type/position, substrate)
-#         """
-#         self._reference_orientation = ref_orient
-#         self._collinear_calc = cl_calc
-#         self._azimuth_range = polar_range
-#         self._polar_range = azimuth_range,
-#         self._symmetryreduce = [False, None, None]
-#
-#         def generate_spin_axes_h(self):
-#             spin_list = []
-#             itr = 0
-#             for phi in self._azimuth_range:
-#                 for theta in  self._polar_range:
-#                     spin_list.append([itr, np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(phi)])
-#                     self._param_list.append([itr, np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(phi)])
-#                     itr += 1
-#             return spin_list
-#         self._spin_list = self.generate_spin_axes_h()
-#
+class MagenticAnisotropySphereFlow(SerialComputeFlow):
+
+    def __init__(self, workdir, npoints, pseudo_par, encut, ldaul, magmom, Uparam, Jparam, kgrid, structure=None, struct_path=None):
+        """
+        Computes the MCAE sphere for a defined structure.
+        """
+
+        self._workdir = workdir
+        self._npoints = npoints
+        self._structure_path = structure_path
+        self._reference_orientation = ref_orient
+        self._collinear_calc = cl_calc
+        self._non_collinear_calcs = []
+
+        def generate_spin_axes_h(self):
+            golden_angle = (3 - np.sqrt(5)) * np.pi
+            theta = golden_angle * np.arange(self._npoints)
+            Sz = np.linspace(1/num_points-1, 1-1/num_points, num_points)
+            radius = np.sqrt(1 - Sz * Sz)
+            Sy = radius * np.sin(theta)
+            Sx = radius * np.cos(theta)
+            self._saxes = np.array([Sx,Sy,Sz]).T
+
+        def set_calculations_h(self):
+
+            cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
+            self._collinear_calc = SCFCalculation(self._cl_dir, pseudo_par=pseudo_par, kgrid=kgrid, structure=None, name="scf_cl", encut=encut, input_parameters=cl_settings)
+
+            itr = 0
+            for spin_axis in self._saxes:
+                ncl_settings = DefaultMagNCLParameters(encut=encut, spin_axis, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
+                ncl_calc = SCFCalculation("scf_ncl"+str(itr), pseudo_par=pseudo_par, kgrid=kgrid, structure=None, name="scf_ncl"+str(itr), encut=encut, input_parameters=cl_settings)
+                self._non_collinear_calcs.append(ncl_calc)
+
+        self.set_calculations_h()
+
+    def make_calculations(self):
+        self._collinear_calc.make_calculation(struct_path=self._structure_path)
+        for calc in self._non_collinear_calcs:
+            calc.make_calculation(struct_path=self._structure_path)
+
+    def run_calculations(self):
+        self._collinear_calc.run_calculation()
+        cl_wvcr = self._collinear_calc._workdir+"/"+"WAVECAR"
+        for calc in self._non_collinear_calcs:
+            copyfile(cl_wvcr, calc._workdir)
+            calc.run_calculation()
+
+            
+
+
 #         def set_calcualtions_h(self):
 #             calc_list = []
 #             for spin in self._spin_list:
