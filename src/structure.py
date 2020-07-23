@@ -20,7 +20,7 @@ class Site:
         mag_moment (ndarray): orientation of magnetic moment [default = None]
         isdefect(bool): True if defect site in lattice [default = False]
         """
-        import pymatgen as pg
+        
         assert isinstance(species, str), "species must be a string!!"
 
         try:

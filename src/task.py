@@ -42,10 +42,10 @@ class InputParameters:
             self._name = name or "input_param"
             self._start_settings = start_settings or {"NWRITE": 2, "ISTART": 1, "INIWAV": 1,
              "ICHARG": None, "NELECT": None, "LORBIT": 11,
-              "NEDOS": 1000, "LOPTICS": ".FALSE.", "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None}
+              "NEDOS": 1000, "LOPTICS": ".FALSE.", "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None, "NBANDS": None, "LWAVE": None}
             self._parallel_settings = parallel_settings or {"flnm": "run_scf.sh", "job_name": "scf_std", "machine": "nano" ,
              "partition": "etna", "nodes": 4,"ppn": 24,
-              "max_time": "24:00:00", "ncore": 8, "kpar": 2, "exec": "vasp_std"}
+              "max_time": "24:00:00", "NCORE": 8, "KPAR": 2, "exec": "vasp_std"}
             self._electronic_settings = electronic_settings or  {"ALGO": "Normal", "ENCUT": 800,
             "NELM": 200, "NELMIN": 4, "EDIFF": 10E-05, "ISMEAR": 1,
             "SIGMA": 0.2, "LASPH": ".TRUE.", "LREAL": "Auto", "ADDGRID": ".TRUE.", "MAXMIX": 100, "BMIX": 1.5}
@@ -78,7 +78,7 @@ class InputParameters:
 
             if key in self._start_settings:
                 self._start_settings[key] = value
-                print("key" + "key changed to" + str(value))
+                print(key+ " key changed to" + " "+str(value))
             else:
                 print("key does not exist!! keys include: {charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym}")
 
@@ -95,7 +95,7 @@ class InputParameters:
 
             if key in self._parallel_settings:
                 self._parallel_settings[key] = value
-                print("key" + "key changed to" + str(value))
+                print(key+ " key changed to"+" "+str(value))
             else:
                 print("key does not exist!! keys include: {flnm , job_name , machine, partition, nodes  ,ppn, max_time , ncore,  kpar}")
 
@@ -111,7 +111,7 @@ class InputParameters:
 
             if key in self._electronic_settings:
                 self._electronic_settings[key] = value
-                print("key" + "key changed to" + str(value))
+                print(key + " key changed to" + " "+str(value))
             else:
                 print("key does not exist!! keys include: {prec_level, algo, encut , nelm,nelmin, ediff, sigma, lasph, lreal, addgrid, bmaxmix, bmix}")
 
@@ -127,7 +127,7 @@ class InputParameters:
             if self._ionic_settings:
               if key in self._ionic_settings:
                 self._ionic_settings[key] = value
-                print("key" + "key changed to" + str(value))
+                print(key+ " key changed to" +" "+str(value))
               else:
                 print("key does not exist!! keys include: {ediff ,nsw, ibrion ,isif, isym, nblock,  kblock}")
             else:
@@ -147,7 +147,7 @@ class InputParameters:
             if self._magnetic_settings:
               if key in self._magnetic_settings:
                 self._magnetic_settings[key] = value
-                print("key" + "key changed to" + str(value))
+                print(key+" key changed to"+ " "+str(value))
               else:
                 print("key does not exist!! keys include: {ispin, magmom, nupdown, saxis, lsorbit,noncollinear}")
             else:
@@ -187,7 +187,7 @@ class InputParameters:
             if self._hubbard_settings:
               if key in self._hubbard_settings:
                   self._hubbard_settings[key] = value
-                  print("key" + "key changed to" + str(value))
+                  print(key + " key changed to"+" "+str(value))
               else:
                   print("key does not exist!! keys include: {ldau, ldatype, ldaul, dlauu, ldauj, lmaxmix}")
             else:
@@ -238,7 +238,7 @@ class DefaultSCFUParameters(InputParameters):
 
              """
 
-             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LADAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
+             dftu_settings = {"LDAU": ".TRUE." , "LDAUU": Uparam, "LDATYPE": 2, "LADAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
              InputParameters.__init__(self, name=name, hubbard_settings=dftu_settings)
              self.update_electronic_settings("ENCUT", encut)
 
@@ -262,7 +262,7 @@ class DefaultMagCLParameters(InputParameters):
              """
 
              cl_settings =  {"ISPIN": 2, "MAGMOM": magmom, "SAXIS": None, "LSORBIT": None, "LNONCOLLINEAR": None}
-             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIMX": 4}
+             dftu_settings = {"LDAU": ".TRUE.", "LDAUU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIMX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=cl_settings, hubbard_settings=dftu_settings)
              self.update_electronic_settings("encut", encut)
 
@@ -279,7 +279,7 @@ class DefaultMagNCLParameters(InputParameters):
              name (str):  name for magnetic noncolinear calculation setting [default="DFTNCL_settings"]
              """
              ncl_settings =  {"ISPIN": 2, "MAGMOM": None, "SAXIS": spinaxis, "LSORBIT": ".TRUE.", "LNONCOLLINEAR": ".TRUE."}
-             dftu_settings = {"LDAU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
+             dftu_settings = {"LDAU": ".TRUE.", "LDAUU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=ncl_settings, hubbard_settings=dftu_settings)
              self.update_electronic_settings("ENCUT", encut)
 
@@ -327,7 +327,7 @@ class SCFCalculation():
          os.mkdir(self._workdir)
          print("Work Directory now in: " + self._workdir)
          make_incar_h(self._workdir, self._input_settings)
-         make_potcar_h(self._workdir, self._pseudo_par)
+         #make_potcar_h(self._workdir, self._pseudo_par)
 
          if struct_path:
             copyfile(struct_path, self._workdir+"/"+"POSCAR")
@@ -348,105 +348,205 @@ class SCFCalculation():
             os.system("rm -r __pycache__")
 
 
-#workdir_ = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_calc_v2"
-#struct_path ="/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_calc/POSCAR"
-# lattice_ = np.array([[1.32,0.00,0.00],[1.36,1.45,0.00],[1.3,0.00,6.64]])
-# spec_ = "Mn"
-# site1_ = Site(spec_, np.array([1,0,1]))
-# site2_ = Site(spec_, np.array([1,0,0]))
-# site3_ = Site(spec_, np.array([0,0,0]))
-# site4_ = Site(spec_, np.array([1,1,1]))
-# sites_ = [site1_, site2_,  site3_, site4_]
-# structure_ = Structure(lattice=lattice_, sites=sites_)
-#calc_ = SCFCalculation(workdir=workdir_, kgrid=np.array([1,1,1]))
-#calc_.make_calculation(struct_path=struct_path)
+# # workdir_ = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/scf_ncl"
+# # struct_path ="/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_structs/POSCAR"
+## ncl_settings = DefaultMagNCLParameters(encut=100, spinaxis=[1,0,0], ldaul=[-1,-1,-2,4], Uparam=[0,0,0,0], Jparam=[0,1,1,2])
+# # ncl_calc = SCFCalculation(workdir=workdir_, pseudo_par=None, kgrid=np.array([2,2,2]), name="scf_ncl", encut=200, input_parameters=ncl_settings)
+# # ncl_calc.make_calculation(struct_path=struct_path)
+#      def run_calculation(self):
+#          os.system("sbatch"+" "+self._input_settings._parallel_settings["flnm"])
+#          self._run_status = "started"
+#          self._jobid = os.system() ##retrieves job id
+#
+#     # def update_calc_status(self):
+#     #  if self._jobid: ##if job has started
+#     #      def is_finished_h(self):
+#     #          ## looks at output file to check if finished
+#     #          if "General timing" is present in OUTCAR:
+#     #            return true
+#     #          else:
+#     #              return false
+#     #        if os.system(self._jobid) is present:
+#     #            self.self._run_status = "running"
+#     #        else:
+#     #          if is_finished_h() == true:
+#     #              self.self._run_status = "Finished"
+#     #          else:
+#     #              self._run_status= "Unfinished"
+#
+#      def get_total_energy(self):
+#          energ_list = []
+#          fl_nm = self._workdir + 'OUTCAR'
+#          isfile = os.path.isfile(fl_nm)
+#          if isfile == False:
+#            print("OUTCAR file not present! try to re-run the calculation.")
+#             pass
+#          else:
+#            with open(fl_nm, 'r') as f:
+#              for line in f.readlines():
+#                if 'TOTEN' in line:
+#                  energ_list.append(line)
+#          tot_energ = energ_list[len(energ_list)-1]
+#          return float(tot_energ[30:40])
+#
+#      def get_run_time(self):
+#         fl_nm = self._workdir + 'OUTCAR'
+#         isfile = os.path.isfile(fl_nm)
+#         if isfile == False:
+#             print("OUTCAR file not present! try to re-run the calculation.")
+#             pass
+#         else:
+#            with open(fl_nm, 'r') as f:
+#              for line in f.readlines():
+#                if 'Total CPU time used (sec):' in line:
+#                    time_str = line
+#         return float(time_str[49:57])
+#
+#
+#      def get_fermi(self):
+#          fl_nm = self._workdir + 'OUTCAR'
+#          isfile = os.path.isfile(fl_nm)
+#          if isfile == False:
+#              print("OUTCAR file not present! try to re-run the calculation.")
+#              pass
+#          else:
+#             with open(fl_nm, 'r') as f:
+#               for line in f.readlines():
+#                 if 'E-fermi :' in line:
+#                     fermi_str = line
+#         return float(fermi_str[12:18])
+#
+#      # def start_calculation(self):
+#      #     def is_finished_h(self):
+#      #         ## looks at output file to check if finished
+#      #         if "General timing" is present in OUTCAR:
+#      #           return true
+#      #         else:
+#      #             return false
+#      #
+#      #     self.make_calculation()
+#      #     self.run_calculation()
+#      #     start = time.time()
+#      #     while self.s_finished_h() is True:
+#      #         calc_time = time.time() - start
+#      #         if calc_time < 30:
+#      #             pass
+#      #         else:
+#      #             if int(calc_time)%30 !=0:
+#      #                 pass
+#      #             else:
+#      #                 self.update_calc_status()
+#      #     self._cputime = self.get_run_time()
+#      #     self._tot_energy = self.get_total_energy()
+#      #     self._fermi = self.get_fermi()
+#
+class MagenticAnisotropySphereFlow:
 
-     def run_calculation(self):
-         os.system("sbatch"+" "+self._input_settings._parallel_settings["flnm"])
-         self._run_status = "started"
-         #self._jobid = os.system() ##retrieves job id
+    def __init__(self, workdir, npoints, pseudo_par, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, structure=None, struct_path=None, cl_dir=None):
 
-    # def update_calc_status(self):
-    #  if self._jobid: ##if job has started
-    #      def is_finished_h(self):
-    #          ## looks at output file to check if finished
-    #          if "General timing" is present in OUTCAR:
-    #            return true
-    #          else:
-    #              return false
-    #        if os.system(self._jobid) is present:
-    #            self.self._run_status = "running"
-    #        else:
-    #          if is_finished_h() == true:
-    #              self.self._run_status = "Finished"
-    #          else:
-    #              self._run_status= "Unfinished"
+        """
+        Computes the MCAE sphere for a defined structure.
+        """
 
-     def get_total_energy(self):
-         energ_list = []
-         fl_nm = self._workdir + 'OUTCAR'
-         isfile = os.path.isfile(fl_nm)
-         if isfile == False:
-           print("OUTCAR file not present! try to re-run the calculation.")
-            pass
-         else:
-           with open(fl_nm, 'r') as f:
-             for line in f.readlines():
-               if 'TOTEN' in line:
-                 energ_list.append(line)
-         tot_energ = energ_list[len(energ_list)-1]
-         return float(tot_energ[30:40])
-
-     def get_run_time(self):
-        fl_nm = self._workdir + 'OUTCAR'
-        isfile = os.path.isfile(fl_nm)
-        if isfile == False:
-            print("OUTCAR file not present! try to re-run the calculation.")
-            pass
+        self._workdir = workdir
+        self._npoints = npoints
+        self._structure_path = struct_path
+        self._reference_orientation = ref_orient
+        self._cl_dir = cl_dir or self._workdir+"/"+"scf_cl"
+        if self._cl_dir:
+           self._collinear_calc = None
         else:
-           with open(fl_nm, 'r') as f:
-             for line in f.readlines():
-               if 'Total CPU time used (sec):' in line:
-                   time_str = line
-        return float(time_str[49:57])
+           pass
+        self._non_collinear_calcs = []
+
+        def generate_spin_axes_h(npoints):
+            golden_angle = (3 - np.sqrt(5)) * np.pi
+            theta = golden_angle * np.arange(npoints)
+            Sz = np.linspace(1/npoints-1, 1-1/npoints, npoints)
+            radius = np.sqrt(1 - Sz * Sz)
+            Sy = radius * np.sin(theta)
+            Sx = radius * np.cos(theta)
+            saxes_temp = np.array([Sx,Sy,Sz]).T
+            saxes = saxes_temp.tolist()
+            return saxes
+
+        self._saxes = generate_spin_axes_h(self._npoints)
+        self._saxes.append(self._reference_orientation)
+
+        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
+            if cl_calc:
+                collinear_calc = None
+            else:
+               cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
+               cl_settings.update_parallel_settings("flnm ", "run_cl.sh")
+               cl_settings.update_parallel_settings("job_name", "cl_run")
+               cl_settings.update_parallel_settings("nodes", nodes)
+               cl_settings.update_parallel_settings("ppn", ppn)
+               cl_settings.update_parallel_settings("max_time", time_cl)
+               cl_settings.update_electronic_settings("ISMEAR", ismear)
+               cl_settings.update_electronic_settings("SIGMA", sigma)
+               cl_settings.update_electronic_settings("EDIFF", 1.0E-6)
+               collinear_calc = SCFCalculation(cl_dir, pseudo_par=pseudo_par, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
+            itr = 0
+            non_collinear_calcs = []
+            for spin_axis in saxes:
+                ncl_settings = DefaultMagNCLParameters(encut=encut, spinaxis=spin_axis, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
+                ncl_settings.update_start_settings("NBANDS", nbands)
+                ncl_settings.update_start_settings("LWAVE", ".FALSE.")
+                ncl_settings.update_parallel_settings("flnm ", "run_ncl.sh")
+                ncl_settings.update_parallel_settings("job_name", "ncl_run_"+str(itr))
+                ncl_settings.update_parallel_settings("nodes", nodes)
+                ncl_settings.update_parallel_settings("ppn", ppn)
+                ncl_settings.update_parallel_settings("max_time", time_ncl)
+                ncl_settings.update_parallel_settings("KPAR", None)
+                ncl_settings.update_parallel_settings("exec", "vasp_ncl")
+                ncl_settings.update_electronic_settings("ISMEAR", ismear)
+                ncl_settings.update_electronic_settings("SIGMA", sigma)
+                ncl_settings.update_electronic_settings("EDIFF", 1.0E-4)
+                ncl_dir = workdir+"/"+"scf_ncl"+"/"+"scf_ncl_"+str(itr)
+                ncl_calc = SCFCalculation(ncl_dir, pseudo_par=pseudo_par, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
+                non_collinear_calcs.append(ncl_calc)
+                itr += 1
+            return [collinear_calc, non_collinear_calcs]
+
+        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands)
+
+    def make_calculations(self):
+        os.mkdir(self._workdir)
+        self._collinear_calc.make_calculation(struct_path=self._structure_path)
+        os.mkdir(self._workdir+"/"+"scf_ncl")
+        for calc in self._non_collinear_calcs:
+            os.mkdir(calc._workdir)
+            calc.make_calculation(struct_path=self._structure_path)
+
+    # def run_calculations(self):
+    #     self._collinear_calc.run_calculation()
+    #     cl_wvcr = self._collinear_calc._workdir+"/"+"WAVECAR"
+    #     for calc in self._non_collinear_calcs:
+    #         copyfile(cl_wvcr, calc._workdir)
+    #         calc.run_calculation()
 
 
-     def get_fermi(self):
-         fl_nm = self._workdir + 'OUTCAR'
-         isfile = os.path.isfile(fl_nm)
-         if isfile == False:
-             print("OUTCAR file not present! try to re-run the calculation.")
-             pass
-         else:
-            with open(fl_nm, 'r') as f:
-              for line in f.readlines():
-                if 'E-fermi :' in line:
-                    fermi_str = line
-        return float(fermi_str[12:18])
+workdir_ = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/mae_wrkflw_v0"
+structure_pth_ = "/Users/nimalec/Documents/Confidential Work /griffin_summer_2020 [Confidential]/spin_orbit_qubit_design_pack/test_structs/POSCAR"
+npoints_ = 10
+pseudo_par_ = "pseudo"
+kgrid_ = [2,2,2]
+nbands_ = 100
+nodes_ = 6
+ppn_ = 100
+ref_orient_ = [1,0,0]
+ldaul_ = [-1, -1, -3, 2]
+magmom_ = [-1, -1, -3, 2]
+Uparam_ = [-1, -1, -3, 2]
+Jparam_= [-1, -1, -3, 2]
+encut_ = 200
 
-     # def start_calculation(self):
-     #     def is_finished_h(self):
-     #         ## looks at output file to check if finished
-     #         if "General timing" is present in OUTCAR:
-     #           return true
-     #         else:
-     #             return false
-     #
-     #     self.make_calculation()
-     #     self.run_calculation()
-     #     start = time.time()
-     #     while self.s_finished_h() is True:
-     #         calc_time = time.time() - start
-     #         if calc_time < 30:
-     #             pass
-     #         else:
-     #             if int(calc_time)%30 !=0:
-     #                 pass
-     #             else:
-     #                 self.update_calc_status()
-     #     self._cputime = self.get_run_time()
-     #     self._tot_energy = self.get_total_energy()
-     #     self._fermi = self.get_fermi()
+flow_=MagenticAnisotropySphereFlow(workdir=workdir_, npoints=npoints_, pseudo_par=pseudo_par_, kgrid=kgrid_, nbands=nbands_,nodes= nodes_, ppn=ppn_, ref_orient=ref_orient_, ldaul=ldaul_, magmom=magmom_, Uparam=Uparam_,  Jparam=Jparam_, encut=encut_, struct_path=structure_pth_)
+#flow_.make_calculations()
+print(flow_._non_collinear_calcs[2]._workdir)
+
+
 
 # class BandCalculation(Calculation):
 #         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
@@ -588,74 +688,3 @@ class SCFCalculation():
     #     self._spin_polar_  =
     #     self._dos_ =
     #     super(SerialComputeFlow, self).__init__(inialized inputs, )
-
-class MagenticAnisotropySphereFlow(SerialComputeFlow):
-
-    def __init__(self, workdir, npoints, pseudo_par, encut, ldaul, magmom, Uparam, Jparam, kgrid, structure=None, struct_path=None):
-        """
-        Computes the MCAE sphere for a defined structure.
-        """
-
-        self._workdir = workdir
-        self._npoints = npoints
-        self._structure_path = structure_path
-        self._reference_orientation = ref_orient
-        self._collinear_calc = cl_calc
-        self._non_collinear_calcs = []
-
-        def generate_spin_axes_h(self):
-            golden_angle = (3 - np.sqrt(5)) * np.pi
-            theta = golden_angle * np.arange(self._npoints)
-            Sz = np.linspace(1/num_points-1, 1-1/num_points, num_points)
-            radius = np.sqrt(1 - Sz * Sz)
-            Sy = radius * np.sin(theta)
-            Sx = radius * np.cos(theta)
-            self._saxes = np.array([Sx,Sy,Sz]).T
-
-        def set_calculations_h(self):
-
-            cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
-            self._collinear_calc = SCFCalculation(self._cl_dir, pseudo_par=pseudo_par, kgrid=kgrid, structure=None, name="scf_cl", encut=encut, input_parameters=cl_settings)
-
-            itr = 0
-            for spin_axis in self._saxes:
-                ncl_settings = DefaultMagNCLParameters(encut=encut, spin_axis, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
-                ncl_calc = SCFCalculation("scf_ncl"+str(itr), pseudo_par=pseudo_par, kgrid=kgrid, structure=None, name="scf_ncl"+str(itr), encut=encut, input_parameters=cl_settings)
-                self._non_collinear_calcs.append(ncl_calc)
-
-        self.set_calculations_h()
-
-    def make_calculations(self):
-        self._collinear_calc.make_calculation(struct_path=self._structure_path)
-        for calc in self._non_collinear_calcs:
-            calc.make_calculation(struct_path=self._structure_path)
-
-    def run_calculations(self):
-        self._collinear_calc.run_calculation()
-        cl_wvcr = self._collinear_calc._workdir+"/"+"WAVECAR"
-        for calc in self._non_collinear_calcs:
-            copyfile(cl_wvcr, calc._workdir)
-            calc.run_calculation()
-
-            
-
-
-#         def set_calcualtions_h(self):
-#             calc_list = []
-#             for spin in self._spin_list:
-#                 temp_magnetic_settings = ['ncl', spin, None]
-#                 temp_calc = SCFCalculation(self._collinear_calc.start_settings, self._collinear_calc.electronic_settings,self._collinear_calc._ionic_settings,temp_magnetic_settings, self._collinear_calc._hubbard_settings , self._collinear_calc._hybrid_settings,  self._collinear_calc._rho_settings)
-#                 calc_list.append(temp_calc)
-#                 self._ncalc += 1
-#             self._calc_list = calc_list
-#         super(SerialComputeFlow, self).__init__(inialized inputs, reference_orient)
-#         self.set_calcualtions_h()
-#
-#     def add_spin(self, spin):
-#         """
-#         Add spin to spin list and make directory
-#         """
-#         temp_magnetic_settings = ['ncl', spin, None]
-#         temp_calc = SCFCalculation(self._collinear_calc.algorithm_settings, self._collinear_calc.electronic_settings, temp_magnetic_settings, self._collinear_calc.hubbard_settings)
-#         calc_list.append(temp_calc)
-#         self._ncalc += 1

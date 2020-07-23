@@ -57,7 +57,7 @@ def make_incar_h(work_dir, input_settings,name="system"):
         pass
     f=open(fl_nm, "w")
 
-    f.write("SYSTEM="+name+"\n\n")
+    f.write("SYSTEM=   "+name+"\n\n")
     f.write("start parameters"+"\n")
 
     for key in input_settings._start_settings:
@@ -68,8 +68,8 @@ def make_incar_h(work_dir, input_settings,name="system"):
 
     f.write("\n")
     f.write("parallel settings"+"\n")
-    f.write("ncore"+"=   "+str(input_settings._parallel_settings["ncore"])+"\n")
-    f.write("kpar"+"=   "+str(input_settings._parallel_settings["kpar"])+"\n\n")
+    f.write("NCORE"+"=   "+str(input_settings._parallel_settings["NCORE"])+"\n")
+    f.write("KPAR"+"=   "+str(input_settings._parallel_settings["KPAR"])+"\n\n")
 
     f.write("electronic"+"\n")
     for key in input_settings._electronic_settings:
@@ -83,7 +83,7 @@ def make_incar_h(work_dir, input_settings,name="system"):
         f.write("ionic"+"\n")
         for key in input_settings._ionic_settings:
             if input_settings._ionic_settings[key]:
-                f.write(key+"="+str(input_settings._ionic_settings[key])+"\n")
+                f.write(key+"=   "+str(input_settings._ionic_settings[key])+"\n")
             else:
                 pass
         f.write("\n")
@@ -95,14 +95,14 @@ def make_incar_h(work_dir, input_settings,name="system"):
                 if key == "SAXIS":
                     saxis = input_settings._magnetic_settings[key]
                     saxis_line = str(saxis[0])+" "+str(saxis[1])+" "+str(saxis[2])
-                    f.write(key+"="+saxis_line+"\n")
+                    f.write(key+"=   "+saxis_line+"\n")
                 elif key == "MAGMOM":
-                    magmom_line = " "
+                    magmom_line = ""
                     for i in input_settings._magnetic_settings[key]:
-                        magmom_line += str(i)+ "  "
-                    f.write(key+"="+str(input_settings._magnetic_settings[key])+"\n")
+                        magmom_line += str(i)+ " "
+                    f.write(key+"=   "+str(input_settings._magnetic_settings[key])+"\n")
                 else:
-                   f.write(key+"="+str(input_settings._magnetic_settings[key])+"\n")
+                   f.write(key+"=   "+str(input_settings._magnetic_settings[key])+"\n")
             else:
                 pass
             f.write("\n")
@@ -120,13 +120,13 @@ def make_incar_h(work_dir, input_settings,name="system"):
         f.write("hubbard"+"\n")
         for key in input_settings._hubbard_settings:
             if input_settings._hubbard_settings[key]:
-                if key == "LDAUL" or key == "LDAUU" or key == "LDAUJ":
-                    line = " "
+                if key == "LDAUL" or key == "LDAU" or key == "LDAUJ":
+                    line = ""
                     for i in input_settings._hubbard_settings[key]:
-                        line += str(i)+ "  "
-                    f.write(key+"="+line+"\n")
+                        line += str(i)+ " "
+                    f.write(key+"=   "+line+"\n")
                 else:
-                    f.write(key+"="+str(input_settings._hubbard_settings[key])+"\n")
+                    f.write(key+"=   "+str(input_settings._hubbard_settings[key])+"\n")
             else:
                 pass
         f.write("\n")
@@ -135,7 +135,7 @@ def make_incar_h(work_dir, input_settings,name="system"):
         f.write("misc"+"\n")
         for key in input_settings._misc_settings:
             if input_settings._misc_settings[key]:
-                f.write(key+"="+str(input_settings._misc_settings[key])+"\n")
+                f.write(key+"=   "+str(input_settings._misc_settings[key])+"\n")
             else:
                 pass
         f.write("\n")
