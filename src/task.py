@@ -252,7 +252,7 @@ class DefaultMagNCLParameters(InputParameters):
              self.update_electronic_settings("ENCUT", encut)
 
 class SCFCalculation():
-     def __init__(self, workdir, pseudo_par, kgrid=None, structure=None, name="scf_calc", encut=600, input_parameters=None):
+     def __init__(self, workdir, pseudo_par, kgrid, structure=None, name="scf_calc", encut=600, input_parameters=None):
          """
          Sets standard input parameters for a VASP calculation.
 
@@ -274,13 +274,15 @@ class SCFCalculation():
          self._kmesh = kgrid
          self._pseudo_par = pseudo_par
          self._input_settings = input_parameters or DefaultSCFParameters(encut=encut)
-         self._run_status = "unstarted" #can be {unstarted, running, crashed, or complete}
+         self._potcar_path = None
+         self._kpoint_path = None
+         self._run_status = "unstarted"
          self._jobid = None
          self._cputime = None
          self._tot_energy = None
          self._fermi = None
 
-     def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None):
+     def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None, potcar_path=None):
          """
          Sets up VASP input files and directory
 
@@ -295,12 +297,12 @@ class SCFCalculation():
          os.mkdir(self._workdir)
          print("Work Directory now in: " + self._workdir)
          make_incar_h(self._workdir, self._input_settings)
-         make_potcar_h(self._workdir, self._pseudo_par)
 
          if struct_path:
             copyfile(struct_path, self._workdir+"/"+"POSCAR")
          else:
-             make_poscar_h(self._workdir, self._structure, [4], ["Mn"])
+             #make_poscar_h(self._workdir, self._structure, [4], ["Mn"])
+             pass
 
          if run_script_path:
              copyfile(run_script_path, self._workdir+"/"+"run_scf.sh")
@@ -309,8 +311,15 @@ class SCFCalculation():
 
          if k_points_path:
              copyfile(k_points_path, self._workdir+"/"+"KPOINTS")
+             self._kpoint_path = k_points_path
          else:
              make_kpoints_h(self._workdir, self._kmesh)
+
+         if potcar_path:
+             copyfile(potcar_path, self._workdir+"/"+"POTCAR")
+             self._potcar_path = potcar_path
+         else:
+             make_potcar_h(self._workdir, self._pseudo_par)
 
          if os.path.exists("__pycache__") is True:
             os.system("rm -r __pycache__")
@@ -332,99 +341,100 @@ class SCFCalculation():
                    time_str = line
         return float(time_str[49:57])
 
-     def update_run_status(self):
-         current_status_ = self._run_status
-         path_ = self._workdir
+     # def update_run_status(self):
+     #     current_status_ = self._run_status
+     #     path_ = self._workdir
+     #
+     #     def check_slurm_file_h(path):  ## checks if slurm file is present
+     #         slurm_files = []
+     #         slurm_file = None
+     #         slurm_files = [i for i in os.listdir(path) if os.path.isfile(os.path.join(path,i)) and "slurm" in i]
+     #         str_len = len(slurm_files)
+     #
+     #         if str_len == 0:
+     #             pass
+     #         else:
+     #             slurm_file = slurm_files[str_len-1]
+     #         return slurm_file
+     #
+     #     def check_outcar_file_h(path): ## checks if job is done, conditioned on there being outcar
+     #         assert os.path.exists("OUTCAR"), "OUTCAR file not present in directory"
+     #         isdone = False
+     #         with open(fl_nm, 'r') as f:
+     #             for line in f.readlines():
+     #                 if "General timing" in line:
+     #                     isdone = True
+     #                     break
+     #        return isdone
+     #
+     #     def is_submitted_h(path, current_status): gets job status
+     #         if current_status == "submitted" or current_status == "running" or current_status == "finished":
+     #             status = True
+     #         else:
+     #             status = False
+     #        return status
+     #
+     #     def is_running_h(path, current_status):
+     #
+     #         if current_status == "running":
+     #             job_status = True
+     #         elif current_status == "finished" or current_status == "not_submitted":
+     #             job_status = False
+     #         else:
+     #             if check_slurm_file_h(path) == None:
+     #                 status = "submitted"
+     #             else:
+     #                 status = "running"
+     #
+     #     def fetch_run_id_h(path):
+     #         flnm = check_slurm_file_h(path)
+     #         assert flnm != None, "job not yet submitted, ID does not exist!"
+     #         return str(flnm[6:14])
+     #
+     #  slurm_file_status = check_slurm_file_h(path_)
+     #  outcar_status = check_outcar_file_h(path_)
+     #  if self._run_status == "not_submited":
+     #     pass
+     #  elif self._run_status == "submited" and slurm_file_status == None:
+     #       pass
+     #  elif self._run_status == "submited" and slurm_file_status != None:
+     #       self._run_status == "running"
+     #       self._jobid = fetch_run_id_h(path_)
+     #  elif self._run_status == "running" and check_outcar_file_h(path) == True:
+     #       self._cputime = self.get_run_time()
 
-         def check_slurm_file_h(path):  ## checks if slurm file is present
-             slurm_files = []
-             slurm_file = None
-             slurm_files = [i for i in os.listdir(path) if os.path.isfile(os.path.join(path,i)) and "slurm" in i]
-             str_len = len(slurm_files)
-
-             if str_len == 0:
-                 pass
-             else:
-                 slurm_file = slurm_files[str_len-1]
-             return slurm_file
-
-         def check_outcar_file_h(path): ## checks if job is done, conditioned on there being outcar
-             assert os.path.exists("OUTCAR"), "OUTCAR file not present in directory"
-             isdone = False
-             with open(fl_nm, 'r') as f:
-                 for line in f.readlines():
-                     if "General timing" in line:
-                         isdone = True
-                         break
-            return isdone
-
-         def is_submitted_h(path, current_status): gets job status
-             if current_status == "submitted" or current_status == "running" or current_status == "finished":
-                 status = True
-             else:
-                 status = False
-            return status
-
-         def is_running_h(path, current_status):
-
-             if current_status == "running":
-                 job_status = True
-             elif current_status == "finished" or current_status == "not_submitted":
-                 job_status = False
-             else:
-                 if check_slurm_file_h(path) == None:
-                     status = "submitted"
-                 else:
-                     status = "running"
-
-         def fetch_run_id_h(path):
-             flnm = check_slurm_file_h(path)
-             assert flnm != None, "job not yet submitted, ID does not exist!"
-             return str(flnm[6:14])
-
-      slurm_file_status = check_slurm_file_h(path_)
-      outcar_status = check_outcar_file_h(path_)
-      if self._run_status == "not_submited":
-         pass
-      elif self._run_status == "submited" and slurm_file_status == None:
-           pass
-      elif self._run_status == "submited" and slurm_file_status != None:
-           self._run_status == "running"
-           self._jobid = fetch_run_id_h(path_)
-      elif self._run_status == "running" and check_outcar_file_h(path) == True:
-           self._cputime = self.get_run_time()
-
-     def get_total_energy(self):
-         energ_list = []
-         fl_nm = self._workdir + 'OUTCAR'
-         isfile = os.path.isfile(fl_nm)
-         if isfile == False:
-           print("OUTCAR file not present! try to re-run the calculation.")
-            pass
-         else:
-           with open(fl_nm, 'r') as f:
-             for line in f.readlines():
-               if 'TOTEN' in line:
-                 energ_list.append(line)
-         tot_energ = energ_list[len(energ_list)-1]
-         return float(tot_energ[30:40])
-
-     def get_fermi(self):
-         fl_nm = self._workdir + 'OUTCAR'
-         isfile = os.path.isfile(fl_nm)
-         if isfile == False:
-             print("OUTCAR file not present! try to re-run the calculation.")
-             pass
-         else:
-            with open(fl_nm, 'r') as f:
-              for line in f.readlines():
-                if 'E-fermi :' in line:
-                    fermi_str = line
-        return float(fermi_str[12:18])
+     # def get_total_energy(self):
+     #     energ_list = []
+     #     fl_nm = self._workdir + 'OUTCAR'
+     #     isfile = os.path.isfile(fl_nm)
+     #     if isfile == False:
+     #       print("OUTCAR file not present! try to re-run the calculation.")
+     #        pass
+     #     else:
+     #       with open(fl_nm, 'r') as f:
+     #         for line in f.readlines():
+     #           if 'TOTEN' in line:
+     #             energ_list.append(line)
+     #     tot_energ = energ_list[len(energ_list)-1]
+     #     return float(tot_energ[30:40])
+     #
+     # def get_fermi(self):
+     #     fl_nm = self._workdir + 'OUTCAR'
+     #     isfile = os.path.isfile(fl_nm)
+     #     if isfile == False:
+     #         print("OUTCAR file not present! try to re-run the calculation.")
+     #         pass
+     #     else:
+     #        with open(fl_nm, 'r') as f:
+     #          for line in f.readlines():
+     #            if 'E-fermi :' in line:
+     #                fermi_str = line
+     #    return float(fermi_str[12:18])
 
 class MagenticAnisotropySphereFlow:
 
-    def __init__(self, workdir, npoints, pseudo_par, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, structure=None, struct_path=None, cl_dir=None):
+    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path,  struct_path,
+       name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, cl_dir=None):
 
         """
         Computes the MCAE sphere for a defined structure.
@@ -432,13 +442,15 @@ class MagenticAnisotropySphereFlow:
 
         self._workdir = workdir
         self._npoints = npoints
+        self._name = name
         self._structure_path = struct_path
+        self._potcar_path =  potcar_path
         self._reference_orientation = ref_orient
-        self._cl_dir = cl_dir or self._workdir+"/"+"scf_cl"
+        self._cl_dir = cl_dir
         if self._cl_dir:
            self._collinear_calc = None
         else:
-           pass
+           self._cl_dir = self._workdir+"/"+"scf_cl"
         self._non_collinear_calcs = []
 
         def generate_spin_axes_h(npoints):
@@ -495,38 +507,38 @@ class MagenticAnisotropySphereFlow:
 
     def make_calculations(self):
         os.mkdir(self._workdir)
-        self._collinear_calc.make_calculation(struct_path=self._structure_path)
+        self._collinear_calc.make_calculation(struct_path=self._structure_path, potcar_path=self._potcar_path)
         os.mkdir(self._workdir+"/"+"scf_ncl")
-        for calc in self._non_collinear_calcs: calc.make_calculation(struct_path=self._structure_path)
+        for calc in self._non_collinear_calcs: calc.make_calculation(struct_path=self._structure_path, potcar_path=self._potcar_path)
 
-    def run_cl_calculation(self):
-        self._collinear_calc.run_calculation()
+    # def run_cl_calculation(self):
+    #     self._collinear_calc.run_calculation()
 
-    def run_ncl_calculations(self):
-        if self._collinear_calc._run_status != "finished":
-            self._collinear_calc.update_run_status()
-            self.run_ncl_calculations()
-        else:
-           cl_wvcr = self._collinear_calc._workdir+"/"+"WAVECAR"
-           cl_chcr = self._collinear_calc._workdir+"/"+"CHGCAR"
-           for calc in self._non_collinear_calcs:
-               copyfile(cl_wvcr, calc._workdir)
-               copyfile(cl_chcr, calc._workdir)
-               calc.run_calculation()
+    # def run_ncl_calculations(self):
+    #     if self._collinear_calc._run_status != "finished":
+    #         self._collinear_calc.update_run_status()
+    #         self.run_ncl_calculations()
+    #     else:
+    #        cl_wvcr = self._collinear_calc._workdir+"/"+"WAVECAR"
+    #        cl_chcr = self._collinear_calc._workdir+"/"+"CHGCAR"
+    #        for calc in self._non_collinear_calcs:
+    #            copyfile(cl_wvcr, calc._workdir)
+    #            copyfile(cl_chcr, calc._workdir)
+    #            calc.run_calculation()
 
-    def retrieve_mae_data(self):
-        mae_data = []
-        for calc in self._non_collinear_calcs:
-            if calc._run_status != "finished":
-               self._collinear_calc.update_run_status()
-               self.retrieve_mae_data()
-            else:
-                spin = calc._input_settings._magnetic_settings["SAXIS"]
-                energ = calc.get_total_energy()
-                os.system("rm -r "+calc._workdir+"/"+"WAVECAR")
-                os.system("rm -r "+calc._workdir+"/"+"CHGCAR")
-                mae_data.append([spin[0], spin[1], spin[2], energ])
-        write_maefile(mae_data)
+    # def retrieve_mae_data(self):
+    #     mae_data = []
+    #     for calc in self._non_collinear_calcs:
+    #         if calc._run_status != "finished":
+    #            self._collinear_calc.update_run_status()
+    #            self.retrieve_mae_data()
+    #         else:
+    #             spin = calc._input_settings._magnetic_settings["SAXIS"]
+    #             energ = calc.get_total_energy()
+    #             os.system("rm -r "+calc._workdir+"/"+"WAVECAR")
+    #             os.system("rm -r "+calc._workdir+"/"+"CHGCAR")
+    #             mae_data.append([spin[0], spin[1], spin[2], energ])
+    #     write_maefile(mae_data)
 
 # workdir_ = "/Users/nimalec/Documents/confidential_work/griffin_group_summer2020/spin_orbit_qubit_design_pack/mae"
 # structure_pth_ = "/Users/nimalec/Documents/confidential_work/griffin_group_summer2020/spin_orbit_qubit_design_pack/test_structs/POSCAR"
