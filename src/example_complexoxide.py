@@ -31,12 +31,12 @@ class BWOFe_MAEworkflow(MagenticAnisotropySphereFlow):
             Uparam=Uparam_, Jparam=Jparam_, encut=encut_, potcar_path=potcar_path, struct_path=struct_path)
 
 if __name__ = "main":
-    BWO_Fe_Bi_poscar_path_ =
+    BWO_Fe_Bi_poscar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/bwo_fe_maesphere_v0/Fe_Bi"
     #BWO_Fe_W_workdir_ =
     npoints_ = 200
-    nbands_ =
-    potcar_path_ = " "
-    BWO_Fe_Bi_poscar_path_ =
+    nbands_ = 1494
+    potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"
+    BWO_Fe_Bi_poscar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v3/test_cl/POSCAR"
     #BWO_Fe_W_poscar_path_ =
     ref_orient_ = [0,0,1]
     mae_calc_BWO_Fe_Bi_ = BWOFe_MAEworkflow(BWO_Fe_W_workdir_, npoints_, nbands, potcar_path, BWO_Fe_Bi_poscar_path_, ref_orient_)
