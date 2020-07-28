@@ -3,7 +3,7 @@ from task import *
 
 class BWOFe_MAEworkflow(MagenticAnisotropySphereFlow):
 
-    def __init__(self, workdir, npoints, nbands, potcar_path, struct_path, ref_orient, cl_path=None, name="BWO_calc"):
+    def __init__(self, workdir, npoints, nbands, struct_path, ref_orient=[0,0,1], cl_path=None, nelect=None, name="BWOFe_mae_sphere"):
             """
             Computes MCAE for Fe doped Bi2WO6 materials.
 
@@ -17,7 +17,8 @@ class BWOFe_MAEworkflow(MagenticAnisotropySphereFlow):
 
             """
             self._workdir = workdir
-            self._npoints = npoints
+            self._npoints = npoints 
+            potcar_path_ = "/global/scratch/nleclerc/spin_orbit_qubit_design_pack/pseudos/BWO_Fe_POTCAR"     
             kgrid_ = [2,2,2]
             nodes_ = 6
             ppn_ = 24
@@ -25,40 +26,6 @@ class BWOFe_MAEworkflow(MagenticAnisotropySphereFlow):
             Uparam_ = [0, 0, 0, 4]
             Jparam_ = [0, 0, 0, 0]
             encut_ = 800
-            magmom_ = [0, 0, 0, 6]
-
-            MagenticAnisotropySphereFlow.__init__(self, workdir=self._workdir, npoints=self._npoints, kgrid=kgrid_, nbands=nbands, nodes=nodes_, ppn=ppn_, ref_orient=ref_orient, ldaul=ldaul_, name=name, magmom=magmom_,
-            Uparam=Uparam_, Jparam=Jparam_, encut=encut_, potcar_path=potcar_path, struct_path=struct_path)
-
-BWO_Fe_Bi_workdir_ = "/global/scratch/nleclerc/soc_mae_predictions/bwo_fe_maesphere_v0/Fe_Bi"
-#BWO_Fe_W_workdir_ =
-npoints_ = 10
-nbands_ = 1494
-potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"
-BWO_Fe_Bi_poscar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v3/test_cl/POSCAR"
-#BWO_Fe_W_poscar_path_ =
-ref_orient_ = [0,0,1]
-#mae_calc_BWO_Fe_Bi_ = BWOFe_MAEworkflow(BWO_Fe_Bi_workdir_, npoints_, nbands_, potcar_path_, BWO_Fe_Bi_poscar_path_, ref_orient_)
-#mae_calc_BWO_Fe_W_  = BWOFe_MAEworkflow(BWO_Fe_W_workdir_, npoints_, nbands, potcar_path, BWO_Fe_Bi_poscar_path_, ref_orient)
-#mae_calc_BWO_Fe_Bi_.make_calculations()
-#mae_calc_BWO_Fe_W_.make_calculations()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            magmom_ = [0, 0, 0, 6] 
+                
+            MagenticAnisotropySphereFlow.__init__(self, workdir, npoints, kgrid_, nbands, nodes_, ppn_, ref_orient, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path, name ="BWOFe_mae_sphere") 

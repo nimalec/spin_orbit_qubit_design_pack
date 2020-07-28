@@ -39,12 +39,12 @@ class InputParameters:
             self._name = name or "input_param"
             self._start_settings = start_settings or {"NWRITE": 2, "ISTART": 1, "INIWAV": 1,
              "ICHARG": None, "NELECT": None, "LORBIT": 11,
-              "NEDOS": 1000, "LOPTICS": ".FALSE.", "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None, "NBANDS": None, "LWAVE": None}
+              "NEDOS": 1000, "LOPTICS": ".FALSE.","ISYM": -1 , "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None, "NBANDS": None, "LWAVE": None}
             self._parallel_settings = parallel_settings or {"flnm": "run_scf.sh", "job_name": "scf_std", "machine": "nano" ,
              "partition": "etna", "nodes": 4,"ppn": 24,
               "max_time": "24:00:00", "NCORE": 8, "KPAR": 2, "exec": "vasp_std"}
-            self._electronic_settings = electronic_settings or  {"ALGO": "Normal", "ENCUT": 800,
-            "NELM": 200, "NELMIN": 4, "EDIFF": 10E-05, "ISMEAR": 1,
+            self._electronic_settings = electronic_settings or  {"PREC":"Accurate" , "ALGO": "Normal", "ENCUT": 800,
+            "NELM": None, "NELMIN": None, "GGA": "PS" ,"EDIFF": 10E-05, "ISMEAR": 1,
             "SIGMA": 0.2, "LASPH": ".TRUE.", "LREAL": "Auto", "ADDGRID": ".TRUE.", "MAXMIX": 100, "BMIX": 1.5}
             self._ionic_settings = ionic_settings
             self._magnetic_settings = magnetic_settings
@@ -543,22 +543,22 @@ class MagenticAnisotropySphereFlow:
     #             mae_data.append([spin[0], spin[1], spin[2], energ])
     #     write_maefile(mae_data)
 
-workdir_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v4"  
-struct_path_ = "/global/scratch/nleclerc/soc_mae_predictions/structures/BWO_Fe_doped/bwo_pca21_Fe_Bisite_pberelaxed.vasp" 
-potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"   
-npoints_ = 10
-kgrid_ = [2,2,2]
-nbands_ = 100
-nodes_ = 6
-ppn_ = 24
-ref_orient_ = [1,0,0]
-ldaul_ = [-1, -1, -3, 2]
-magmom_ = [-1, -1, -3, 2]
-Uparam_ = [-1, -1, -3, 2]
-Jparam_= [-1, -1, -3, 2]
-encut_ = 800  
-test_mae = MagenticAnisotropySphereFlow(workdir_, npoints_, kgrid_, nbands_, nodes_, ppn_, ref_orient_, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path_) 
-test_mae.make_calculations() 
+#workdir_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v8"  
+#struct_path_ = "/global/scratch/nleclerc/soc_mae_predictions/structures/BWO_Fe_doped/bwo_pca21_Fe_Bisite_pberelaxed.vasp" 
+#potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"   
+#npoints_ = 10
+#kgrid_ = [2,2,2]
+#nbands_ = 100
+#nodes_ = 6
+#ppn_ = 24
+#ref_orient_ = [1,0,0]
+#ldaul_ = [-1, -1, -3, 2]
+#magmom_ = [-1, -1, -3, 2]
+#Uparam_ = [-1, -1, -3, 2]
+#Jparam_= [-1, -1, -3, 2]
+#encut_ = 800  
+#test_mae = MagenticAnisotropySphereFlow(workdir_, npoints_, kgrid_, nbands_, nodes_, ppn_, ref_orient_, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path_) 
+#test_mae.make_calculations() 
 
 	# class BandCalculation(Calculation):
 	#         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
