@@ -276,11 +276,13 @@ class SCFCalculation():
          self._input_settings = input_parameters or DefaultSCFParameters(encut=encut)
          self._potcar_path = None
          self._kpoint_path = None
+         self._struct_path = None
          self._run_status = "unstarted"
          self._jobid = None
          self._cputime = None
          self._tot_energy = None
          self._fermi = None
+# add Gamma line between 0 and k points 
 
      def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None, potcar_path=None):
          """
@@ -300,6 +302,7 @@ class SCFCalculation():
 
          if struct_path:
             copyfile(struct_path, self._workdir+"/"+"POSCAR")
+            self._struct_path = struct_path
          else:
              #make_poscar_h(self._workdir, self._structure, [4], ["Mn"])
              pass
@@ -447,6 +450,7 @@ class MagenticAnisotropySphereFlow:
         self._potcar_path =  potcar_path
         self._reference_orientation = ref_orient
         self._cl_dir = cl_dir
+        self._collinear_calc = None
         if self._cl_dir:
            self._collinear_calc = None
         else:
@@ -467,7 +471,7 @@ class MagenticAnisotropySphereFlow:
         self._saxes = generate_spin_axes_h(self._npoints)
         self._saxes.append(self._reference_orientation)
 
-        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
+        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par,potcar_path, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
             if cl_calc:
                 collinear_calc = None
             else:
@@ -503,7 +507,7 @@ class MagenticAnisotropySphereFlow:
                 itr += 1
             return [collinear_calc, non_collinear_calcs]
 
-        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands)
+        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, potcar_path=self._potcar_path, ismear, sigma, pseudo_par, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands)
 
     def make_calculations(self):
         os.mkdir(self._workdir)
