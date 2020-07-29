@@ -28,4 +28,5 @@ class BWOFe_MAEworkflow(MagenticAnisotropySphereFlow):
             encut_ = 800
             magmom_ = [0, 0, 0, 6] 
                 
-            MagenticAnisotropySphereFlow.__init__(self, workdir, npoints, kgrid_, nbands, nodes_, ppn_, ref_orient, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path, name ="BWOFe_mae_sphere") 
+            MagenticAnisotropySphereFlow.__init__(self, workdir, npoints, kgrid_, nbands, nodes_, ppn_, ref_orient, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path, name ="BWOFe_mae_sphere")  
+
