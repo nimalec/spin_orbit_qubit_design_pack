@@ -39,12 +39,12 @@ class InputParameters:
             self._name = name or "input_param"
             self._start_settings = start_settings or {"NWRITE": 2, "ISTART": 1, "INIWAV": 1,
              "ICHARG": None, "NELECT": None, "LORBIT": 11,
-              "NEDOS": 1000, "LOPTICS": ".FALSE.", "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None, "NBANDS": None, "LWAVE": None}
+              "NEDOS": 1000, "LOPTICS": ".FALSE.","ISYM": -1 , "LELF": None, "LVHAR": None, "RWIGS": None, "LVTOF": None, "NBANDS": None, "LWAVE": None}
             self._parallel_settings = parallel_settings or {"flnm": "run_scf.sh", "job_name": "scf_std", "machine": "nano" ,
              "partition": "etna", "nodes": 4,"ppn": 24,
               "max_time": "24:00:00", "NCORE": 8, "KPAR": 2, "exec": "vasp_std"}
-            self._electronic_settings = electronic_settings or  {"ALGO": "Normal", "ENCUT": 800,
-            "NELM": 200, "NELMIN": 4, "EDIFF": 10E-05, "ISMEAR": 1,
+            self._electronic_settings = electronic_settings or  {"PREC":"Accurate" , "ALGO": "Normal", "ENCUT": 800,
+            "NELM": None, "NELMIN": None, "GGA": "PS" ,"EDIFF": 10E-05, "ISMEAR": 1,
             "SIGMA": 0.2, "LASPH": ".TRUE.", "LREAL": "Auto", "ADDGRID": ".TRUE.", "MAXMIX": 100, "BMIX": 1.5}
             self._ionic_settings = ionic_settings
             self._magnetic_settings = magnetic_settings
@@ -163,7 +163,7 @@ class InputParameters:
               else:
                   print("key does not exist!! keys include: {ldau, ldatype, ldaul, dlauu, ldauj, lmaxmix}")
             else:
-             print("hybrid settings not present!")
+               print("hybrid settings not present!")
 
 
 class DefaultOptimizationParameters(InputParameters):
@@ -274,6 +274,7 @@ class SCFCalculation():
          self._kmesh = kgrid
          self._pseudo_par = pseudo_par
          self._input_settings = input_parameters or DefaultSCFParameters(encut=encut)
+         self._struct_path = None
          self._potcar_path = None
          self._kpoint_path = None
          self._struct_path = None
@@ -282,7 +283,7 @@ class SCFCalculation():
          self._cputime = None
          self._tot_energy = None
          self._fermi = None
-# add Gamma line between 0 and k points 
+# add Gamma line between 0 and k points
 
      def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None, potcar_path=None):
          """
@@ -406,38 +407,37 @@ class SCFCalculation():
      #  elif self._run_status == "running" and check_outcar_file_h(path) == True:
      #       self._cputime = self.get_run_time()
 
-     # def get_total_energy(self):
-     #     energ_list = []
-     #     fl_nm = self._workdir + 'OUTCAR'
-     #     isfile = os.path.isfile(fl_nm)
-     #     if isfile == False:
-     #       print("OUTCAR file not present! try to re-run the calculation.")
-     #        pass
-     #     else:
-     #       with open(fl_nm, 'r') as f:
-     #         for line in f.readlines():
-     #           if 'TOTEN' in line:
-     #             energ_list.append(line)
-     #     tot_energ = energ_list[len(energ_list)-1]
-     #     return float(tot_energ[30:40])
-     #
-     # def get_fermi(self):
-     #     fl_nm = self._workdir + 'OUTCAR'
-     #     isfile = os.path.isfile(fl_nm)
-     #     if isfile == False:
-     #         print("OUTCAR file not present! try to re-run the calculation.")
-     #         pass
-     #     else:
-     #        with open(fl_nm, 'r') as f:
-     #          for line in f.readlines():
-     #            if 'E-fermi :' in line:
-     #                fermi_str = line
-     #    return float(fermi_str[12:18])
+#def get_total_energy(self):
+#    energ_list = []
+#    fl_nm = self._workdir + 'OUTCAR'
+#    isfile = os.path.isfile(fl_nm)
+#    if isfile == False:
+#      print("OUTCAR file not present! try to re-run the calculation.")
+#       pass
+#    else:
+#      with open(fl_nm, 'r') as f:
+#        for line in f.readlines():
+#          if 'TOTEN' in line:
+#            energ_list.append(line)
+#    tot_energ = energ_list[len(energ_list)-1]
+#    return float(tot_energ[30:40])
+#
+#def get_fermi(self):
+#    fl_nm = self._workdir + 'OUTCAR'
+#    isfile = os.path.isfile(fl_nm)
+#    if isfile == False:
+#        print("OUTCAR file not present! try to re-run the calculation.")
+#        pass
+#    else:
+#       with open(fl_nm, 'r') as f:
+#         for line in f.readlines():
+#           if 'E-fermi :' in line:
+#               fermi_str = line
+#   return float(fermi_str[12:18])
 
 class MagenticAnisotropySphereFlow:
 
-    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path,  struct_path,
-       name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, cl_dir=None):
+    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, cl_dir=None):
 
         """
         Computes the MCAE sphere for a defined structure.
@@ -449,10 +449,11 @@ class MagenticAnisotropySphereFlow:
         self._structure_path = struct_path
         self._potcar_path =  potcar_path
         self._reference_orientation = ref_orient
+        self._collinear_calc = None
         self._cl_dir = cl_dir
         self._collinear_calc = None
         if self._cl_dir:
-           self._collinear_calc = None
+           pass
         else:
            self._cl_dir = self._workdir+"/"+"scf_cl"
         self._non_collinear_calcs = []
@@ -484,7 +485,7 @@ class MagenticAnisotropySphereFlow:
                cl_settings.update_electronic_settings("ISMEAR", ismear)
                cl_settings.update_electronic_settings("SIGMA", sigma)
                cl_settings.update_electronic_settings("EDIFF", 1.0E-6)
-               collinear_calc = SCFCalculation(cl_dir, pseudo_par=pseudo_par, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
+               collinear_calc = SCFCalculation(cl_dir, pseudo_par=None, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
             itr = 0
             non_collinear_calcs = []
             for spin_axis in saxes:
@@ -502,7 +503,7 @@ class MagenticAnisotropySphereFlow:
                 ncl_settings.update_electronic_settings("SIGMA", sigma)
                 ncl_settings.update_electronic_settings("EDIFF", 1.0E-4)
                 ncl_dir = workdir+"/"+"scf_ncl"+"/"+"scf_ncl_"+str(itr)
-                ncl_calc = SCFCalculation(ncl_dir, pseudo_par=pseudo_par, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
+                ncl_calc = SCFCalculation(ncl_dir, pseudo_par=None, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
                 non_collinear_calcs.append(ncl_calc)
                 itr += 1
             return [collinear_calc, non_collinear_calcs]
@@ -544,165 +545,160 @@ class MagenticAnisotropySphereFlow:
     #             mae_data.append([spin[0], spin[1], spin[2], energ])
     #     write_maefile(mae_data)
 
-# workdir_ = "/Users/nimalec/Documents/confidential_work/griffin_group_summer2020/spin_orbit_qubit_design_pack/mae"
-# structure_pth_ = "/Users/nimalec/Documents/confidential_work/griffin_group_summer2020/spin_orbit_qubit_design_pack/test_structs/POSCAR"
-# npoints_ = 10
-# pseudo_par_ = "pseudo"
-# kgrid_ = [2,2,2]
-# nbands_ = 100
-# nodes_ = 6
-# ppn_ = 100
-# ref_orient_ = [1,0,0]
-# ldaul_ = [-1, -1, -3, 2]
-# magmom_ = [-1, -1, -3, 2]
-# Uparam_ = [-1, -1, -3, 2]
-# Jparam_= [-1, -1, -3, 2]
-# encut_ = 200
-#
-# flow_=MagenticAnisotropySphereFlow(workdir=workdir_, npoints=npoints_, pseudo_par=pseudo_par_, kgrid=kgrid_, nbands=nbands_,nodes= nodes_, ppn=ppn_, ref_orient=ref_orient_, ldaul=ldaul_, magmom=magmom_, Uparam=Uparam_,  Jparam=Jparam_, encut=encut_, struct_path=structure_pth_)
-# flow_.make_calculations()
-#print(flow_._workdir)
-#print(flow_._non_collinear_calcs[2]._workdir)
+#workdir_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v8"
+#struct_path_ = "/global/scratch/nleclerc/soc_mae_predictions/structures/BWO_Fe_doped/bwo_pca21_Fe_Bisite_pberelaxed.vasp"
+#potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"
+#npoints_ = 10
+#kgrid_ = [2,2,2]
+#nbands_ = 100
+#nodes_ = 6
+#ppn_ = 24
+#ref_orient_ = [1,0,0]
+#ldaul_ = [-1, -1, -3, 2]
+#magmom_ = [-1, -1, -3, 2]
+#Uparam_ = [-1, -1, -3, 2]
+#Jparam_= [-1, -1, -3, 2]
+#encut_ = 800
+#test_mae = MagenticAnisotropySphereFlow(workdir_, npoints_, kgrid_, nbands_, nodes_, ppn_, ref_orient_, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path_)
+#test_mae.make_calculations()
+
+	# class BandCalculation(Calculation):
+	#         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
+	#             """OUTPUT List:
+	#                Istart:
+	#                   - 0 = begin from scratch
+	#                   - 1 = continue job w energy cutoff
+	#                   - 2 = continue, restart w constant basis
+	#                ICHARG:
+	#                    -   0 (computes from initial wfn)
+	#                    - = 1 extrapolate from old positions, reads from CHCAR
+	#
+	#               LORBIT =  10 ==> not decomposed DOS
+	#               LORBIT = 11 ==> decomposed DOS
+	#             """
+	#             super(SCFCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_lists)
+	#
+	#             self._bands_options_ = [k_path, nbnds, charge_option]
+	#
+	#             self._scf_setting_ = [charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym]
+	#             self._ionic_  = []
+	#             self._dos_ = [lorbit, dos_pts]
+	#             self._bands_options_ = [k_path, nbnds, charge_option]
+	#             self._magentic_options_ = [spin_polar, magmom, spin_orbit]
+	#             self._hubbard_ = [dft_u, dudarev, ldaul, u_param, j_param, lda_mix]
+	#             self._hybrid_ = [hf_calc, hf_fft, hf_max, hf_scren, hf_xch]
+	#             self._rho_decomp_ = [par_chg, en_rng, ref_ef, over_k, over_bnd]
+	#
+	#         def make_calculation(self):
+	#                 """Sets input parameters for ground state calculation and makes files for calculation"""
+	#             temp_dir = os.getcwd()
+	#             os.mkdir(self._workdir)
+	#             print("Work Directory now in:" + self._workdir)
+	#             os.chdir(self._workdir)
+	#             make_incar(self._pseudos, self._input)
+	#             make_poscar(self. )
+	#             make_potcar(self._pseudos)
+	#             make_runscript(self._parallelization)
+	#             os.chdir(temp_dir)
+	#
+
+
+	#class PhononCalculation(Calculation):
+	#    def __init__(self, input):
+	#        """""
+	#        Sets input for relaxation calculation
+	#        """
+	#        self._algorithm_ =
+	#        self._bands_ =
+	#        self._rho_   =
+	#        self._spin_orbit_ =
+	#        self._charge_compensate_ =
+	#        self._spin_polar_  =
+	#        super(RelaxationCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_list )
 
 
 
-# class BandCalculation(Calculation):
-#         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
-#             """OUTPUT List:
-#                Istart:
-#                   - 0 = begin from scratch
-#                   - 1 = continue job w energy cutoff
-#                   - 2 = continue, restart w constant basis
-#                ICHARG:
-#                    -   0 (computes from initial wfn)
-#                    - = 1 extrapolate from old positions, reads from CHCAR
-#
-#               LORBIT =  10 ==> not decomposed DOS
-#               LORBIT = 11 ==> decomposed DOS
-#             """
-#             super(SCFCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_lists)
-#
-#             self._bands_options_ = [k_path, nbnds, charge_option]
-#
-#             self._scf_setting_ = [charge_option, prec, encut, nstep, epsilon, pseudo, n_elect.structure, smear, sigma, isym]
-#             self._ionic_  = []
-#             self._dos_ = [lorbit, dos_pts]
-#             self._bands_options_ = [k_path, nbnds, charge_option]
-#             self._magentic_options_ = [spin_polar, magmom, spin_orbit]
-#             self._hubbard_ = [dft_u, dudarev, ldaul, u_param, j_param, lda_mix]
-#             self._hybrid_ = [hf_calc, hf_fft, hf_max, hf_scren, hf_xch]
-#             self._rho_decomp_ = [par_chg, en_rng, ref_ef, over_k, over_bnd]
-#
-#         def make_calculation(self):
-#                 """Sets input parameters for ground state calculation and makes files for calculation"""
-#             temp_dir = os.getcwd()
-#             os.mkdir(self._workdir)
-#             print("Work Directory now in:" + self._workdir)
-#             os.chdir(self._workdir)
-#             make_incar(self._pseudos, self._input)
-#             make_poscar(self. )
-#             make_potcar(self._pseudos)
-#             make_runscript(self._parallelization)
-#             os.chdir(temp_dir)
-#
+	#class EFieldCalculation(Calculation):
 
 
-#class PhononCalculation(Calculation):
-#    def __init__(self, input):
-#        """""
-#        Sets input for relaxation calculation
-#        """
-#        self._algorithm_ =
-#        self._bands_ =
-#        self._rho_   =
-#        self._spin_orbit_ =
-#        self._charge_compensate_ =
-#        self._spin_polar_  =
-#        super(RelaxationCalculation, self).__init__(self, work_dir, structure, k_dim, pseudo_list )
+	# class SerialComputeFlow():
+	# """
+	# Sets up a serial set of compuations which iterate over a desired degree of freedom
+	# (i.e. strain, dopant type/position, substrate)
+	# """
+	#     def __init__(self, workdir, dir_prefix="scf_calc",name="series_calculation" ):
+	#     """
+	#     Sets up a serial set of compuations which iterate over a desired degree of freedom
+	#     (i.e. strain, dopant type/position, substrate)
+	#     """
+	#         self._workdir = workdir
+	#         self._dir_prefix = dir_prefix
+	#         self._dir_names = []
+	#         self._ncalc = 0
+	#         self._param_list = []
+	#         self._calc_list = []
 
+	    # def setup_calc_series(self):
+	    #     os.chdir(self._workdir)
+	    #     param_list = self._param_list
+	    #     for i in range(self._ncalc):
+	    #         dir_name = self._dir_prefix + param_list[i]
+	    #         self._dir_names.append(dirname)
+	    #         os.mkdir(dirname)
 
+	    # def make_series(self):
+	    #     if len(self._calc_list) == 0:
+	    #         pass
+	    #     else:
+	    #         for calc in self._calc_list:
+	    #             calc.make_calculation()
+	    # def add_calc(self, param):
+	    #
+	    # def remove_calc(self):
+	    #
+	    # def run_status(self):
+	    #
+	    #
+	    #
 
-#class EFieldCalculation(Calculation):
+	# class ConvergeTest(SerialComputeFlow):
+	#     """
+	#     Sets up a serial set of compuations which iterate over a desired degree of freedom
+	#     (i.e. strain, dopant type/position, substrate)
+	#     """
 
+	    # """OUTPUT List:
+	    #    - CHG: chrge density, lattice vecctors, coords.
+	    #    - DOSCAR: DOS
+	    #    - EIGENVAL: bands
+	    #    - IBZKPT: BZ
+	    #    - LOCPOT: local potential
+	    #    - OSZICAR: information at each nstep
+	    #    - OUTCAR: outputfile, main
+	    #    - PARCHG: partial charage density
+	    #    - PROCAR: site projected wfn cahracter
+	    #    - WAVECAR: wavefunctions and coefficients, eigenvalues
+	    # """
+	    #
+	    #     self._algorithm_ =
+	    #     self._bands_ =
+	    #     self._rho_   =
+	    #     self._spin_orbit_ =
+	    #     self._charge_compensate_ =
+	    #     self._spin_polar_  =
+	    #     self._dos_ =
+	    #     super(SerialComputeFlow, self).__init__(inialized inputs, )
 
-# class SerialComputeFlow():
-# """
-# Sets up a serial set of compuations which iterate over a desired degree of freedom
-# (i.e. strain, dopant type/position, substrate)
-# """
-#     def __init__(self, workdir, dir_prefix="scf_calc",name="series_calculation" ):
-#     """
-#     Sets up a serial set of compuations which iterate over a desired degree of freedom
-#     (i.e. strain, dopant type/position, substrate)
-#     """
-#         self._workdir = workdir
-#         self._dir_prefix = dir_prefix
-#         self._dir_names = []
-#         self._ncalc = 0
-#         self._param_list = []
-#         self._calc_list = []
-
-    # def setup_calc_series(self):
-    #     os.chdir(self._workdir)
-    #     param_list = self._param_list
-    #     for i in range(self._ncalc):
-    #         dir_name = self._dir_prefix + param_list[i]
-    #         self._dir_names.append(dirname)
-    #         os.mkdir(dirname)
-
-    # def make_series(self):
-    #     if len(self._calc_list) == 0:
-    #         pass
-    #     else:
-    #         for calc in self._calc_list:
-    #             calc.make_calculation()
-    # def add_calc(self, param):
-    #
-    # def remove_calc(self):
-    #
-    # def run_status(self):
-    #
-    #
-    #
-
-# class ConvergeTest(SerialComputeFlow):
-#     """
-#     Sets up a serial set of compuations which iterate over a desired degree of freedom
-#     (i.e. strain, dopant type/position, substrate)
-#     """
-
-    # """OUTPUT List:
-    #    - CHG: chrge density, lattice vecctors, coords.
-    #    - DOSCAR: DOS
-    #    - EIGENVAL: bands
-    #    - IBZKPT: BZ
-    #    - LOCPOT: local potential
-    #    - OSZICAR: information at each nstep
-    #    - OUTCAR: outputfile, main
-    #    - PARCHG: partial charage density
-    #    - PROCAR: site projected wfn cahracter
-    #    - WAVECAR: wavefunctions and coefficients, eigenvalues
-    # """
-    #
-    #     self._algorithm_ =
-    #     self._bands_ =
-    #     self._rho_   =
-    #     self._spin_orbit_ =
-    #     self._charge_compensate_ =
-    #     self._spin_polar_  =
-    #     self._dos_ =
-    #     super(SerialComputeFlow, self).__init__(inialized inputs, )
-
-#class TimingTest(SerialComputeFlow):#
-#    """
-    # Sets up a serial set of compuations which iterate over a desired degree of freedom
-    # (i.e. strain, dopant type/position, substrate)
-    # """
-    #     self._algorithm_ =
-    #     self._bands_ =
-    #     self._rho_   =
-    #     self._spin_orbit_ =
-    #     self._charge_compensate_ =
-    #     self._spin_polar_  =
-    #     self._dos_ =
-    #     super(SerialComputeFlow, self).__init__(inialized inputs, )
+	#class TimingTest(SerialComputeFlow):#
+	#    """
+	    # Sets up a serial set of compuations which iterate over a desired degree of freedom
+	    # (i.e. strain, dopant type/position, substrate)
+	    # """
+	    #     self._algorithm_ =
+	    #     self._bands_ =
+	    #     self._rho_   =
+	    #     self._spin_orbit_ =
+	    #     self._charge_compensate_ =
+	    #     self._spin_polar_  =
+	    #     self._dos_ =
+	    #     super(SerialComputeFlow, self).__init__(inialized inputs, )
