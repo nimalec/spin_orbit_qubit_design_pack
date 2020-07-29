@@ -163,7 +163,7 @@ class InputParameters:
               else:
                   print("key does not exist!! keys include: {ldau, ldatype, ldaul, dlauu, ldauj, lmaxmix}")
             else:
-             print("hybrid settings not present!")
+               print("hybrid settings not present!")
 
 
 class DefaultOptimizationParameters(InputParameters):
@@ -274,14 +274,16 @@ class SCFCalculation():
          self._kmesh = kgrid
          self._pseudo_par = pseudo_par
          self._input_settings = input_parameters or DefaultSCFParameters(encut=encut)
-         self._struct_path = None 
+         self._struct_path = None
          self._potcar_path = None
          self._kpoint_path = None
+         self._struct_path = None
          self._run_status = "unstarted"
          self._jobid = None
          self._cputime = None
          self._tot_energy = None
          self._fermi = None
+# add Gamma line between 0 and k points
 
      def make_calculation(self, struct_path=None, run_script_path=None, k_points_path=None, potcar_path=None):
          """
@@ -301,7 +303,7 @@ class SCFCalculation():
 
          if struct_path:
             copyfile(struct_path, self._workdir+"/"+"POSCAR")
-            self._struct_path = struct_path  
+            self._struct_path = struct_path
          else:
              #make_poscar_h(self._workdir, self._structure, [4], ["Mn"])
              pass
@@ -449,8 +451,9 @@ class MagenticAnisotropySphereFlow:
         self._reference_orientation = ref_orient
         self._collinear_calc = None
         self._cl_dir = cl_dir
+        self._collinear_calc = None
         if self._cl_dir:
-           pass 
+           pass
         else:
            self._cl_dir = self._workdir+"/"+"scf_cl"
         self._non_collinear_calcs = []
@@ -469,8 +472,7 @@ class MagenticAnisotropySphereFlow:
         self._saxes = generate_spin_axes_h(self._npoints)
         self._saxes.append(self._reference_orientation)
 
-        def set_calculations_h(workdir, saxes, cl_calc, cl_dir, kgrid, nodes, ppn, time_cl, time_ncl, nbands, encut, ismear, sigma, magmom, ladaul, Uparam, Jparam):  
-
+        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par,potcar_path, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
             if cl_calc:
                 collinear_calc = None
             else:
@@ -506,7 +508,7 @@ class MagenticAnisotropySphereFlow:
                 itr += 1
             return [collinear_calc, non_collinear_calcs]
 
-        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._workdir, self._saxes, self._collinear_calc, self._cl_dir, kgrid, nodes, ppn, time_cl, time_ncl, nbands, encut, ismear, sigma, magmom, ldaul, Uparam, Jparam)
+        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, potcar_path=self._potcar_path, ismear, sigma, pseudo_par, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands)
 
     def make_calculations(self):
         os.mkdir(self._workdir)
@@ -543,22 +545,7 @@ class MagenticAnisotropySphereFlow:
     #             mae_data.append([spin[0], spin[1], spin[2], energ])
     #     write_maefile(mae_data)
 
-#workdir_ = "/global/scratch/nleclerc/soc_mae_predictions/test_mae_v8"  
-#struct_path_ = "/global/scratch/nleclerc/soc_mae_predictions/structures/BWO_Fe_doped/bwo_pca21_Fe_Bisite_pberelaxed.vasp" 
-#potcar_path_ = "/global/scratch/nleclerc/soc_mae_predictions/pseudos/BiWOFe/BiWFeO_POTCAR"   
-#npoints_ = 10
-#kgrid_ = [2,2,2]
-#nbands_ = 100
-#nodes_ = 6
-#ppn_ = 24
-#ref_orient_ = [1,0,0]
-#ldaul_ = [-1, -1, -3, 2]
-#magmom_ = [-1, -1, -3, 2]
-#Uparam_ = [-1, -1, -3, 2]
-#Jparam_= [-1, -1, -3, 2]
-#encut_ = 800  
-#test_mae = MagenticAnisotropySphereFlow(workdir_, npoints_, kgrid_, nbands_, nodes_, ppn_, ref_orient_, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path_) 
-#test_mae.make_calculations() 
+
 
 	# class BandCalculation(Calculation):
 	#         def __init__(self, charge_option, wfn,  istart, work_dir, structure, k_dim, pseudo_lists, k_path = None, nbnds = None, lorbit = True , smear = False , sigma = 0.01, isym = 0):
