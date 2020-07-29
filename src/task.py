@@ -472,7 +472,7 @@ class MagenticAnisotropySphereFlow:
         self._saxes = generate_spin_axes_h(self._npoints)
         self._saxes.append(self._reference_orientation)
 
-        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, pseudo_par,potcar_path, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
+        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
             if cl_calc:
                 collinear_calc = None
             else:
@@ -508,7 +508,8 @@ class MagenticAnisotropySphereFlow:
                 itr += 1
             return [collinear_calc, non_collinear_calcs]
 
-        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, potcar_path=self._potcar_path, ismear, sigma, pseudo_par, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands)
+
+        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands)
 
     def make_calculations(self):
         os.mkdir(self._workdir)
