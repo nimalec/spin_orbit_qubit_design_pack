@@ -437,7 +437,7 @@ class SCFCalculation():
 
 class MagenticAnisotropySphereFlow:
 
-    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, cl_dir=None):
+    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, nelect=None, cl_dir=None):
 
         """
         Computes the MCAE sphere for a defined structure.
@@ -472,11 +472,11 @@ class MagenticAnisotropySphereFlow:
         self._saxes = generate_spin_axes_h(self._npoints)
         self._saxes.append(self._reference_orientation)
 
-        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands):
+        def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands, nelect):
             if cl_calc:
                 collinear_calc = None
             else:
-               cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
+               cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)  
                cl_settings.update_parallel_settings("flnm ", "run_cl.sh")
                cl_settings.update_parallel_settings("job_name", "cl_run")
                cl_settings.update_parallel_settings("nodes", nodes)
@@ -484,7 +484,12 @@ class MagenticAnisotropySphereFlow:
                cl_settings.update_parallel_settings("max_time", time_cl)
                cl_settings.update_electronic_settings("ISMEAR", ismear)
                cl_settings.update_electronic_settings("SIGMA", sigma)
-               cl_settings.update_electronic_settings("EDIFF", 1.0E-6)
+               cl_settings.update_electronic_settings("EDIFF", 1.0E-6) 
+               if nelect: 
+                    cl_settings.update_start_settings("NELECT", nelect)
+               else: 
+                 pass
+  
                collinear_calc = SCFCalculation(cl_dir, pseudo_par=None, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
             itr = 0
             non_collinear_calcs = []
@@ -502,6 +507,11 @@ class MagenticAnisotropySphereFlow:
                 ncl_settings.update_electronic_settings("ISMEAR", ismear)
                 ncl_settings.update_electronic_settings("SIGMA", sigma)
                 ncl_settings.update_electronic_settings("EDIFF", 1.0E-4)
+                if nelect:                                                
+                     ncl_settings.update_start_settings("NELECT", nelect)
+                else: 
+                  pass 
+  
                 ncl_dir = workdir+"/"+"scf_ncl"+"/"+"scf_ncl_"+str(itr)
                 ncl_calc = SCFCalculation(ncl_dir, pseudo_par=None, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
                 non_collinear_calcs.append(ncl_calc)
@@ -509,7 +519,7 @@ class MagenticAnisotropySphereFlow:
             return [collinear_calc, non_collinear_calcs]
 
 
-        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ladaul, Uparam, Jparam, nbands)
+        [self._collinear_calc, self._non_collinear_calcs] = set_calculations_h(self._collinear_calc, self._cl_dir, self._saxes, self._workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands, nelect)
 
     def make_calculations(self):
         os.mkdir(self._workdir)
