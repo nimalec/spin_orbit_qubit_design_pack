@@ -476,7 +476,7 @@ class MagenticAnisotropySphereFlow:
             if cl_calc:
                 collinear_calc = None
             else:
-               cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)  
+               cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam)
                cl_settings.update_parallel_settings("flnm ", "run_cl.sh")
                cl_settings.update_parallel_settings("job_name", "cl_run")
                cl_settings.update_parallel_settings("nodes", nodes)
@@ -484,12 +484,12 @@ class MagenticAnisotropySphereFlow:
                cl_settings.update_parallel_settings("max_time", time_cl)
                cl_settings.update_electronic_settings("ISMEAR", ismear)
                cl_settings.update_electronic_settings("SIGMA", sigma)
-               cl_settings.update_electronic_settings("EDIFF", 1.0E-6) 
-               if nelect: 
+               cl_settings.update_electronic_settings("EDIFF", 1.0E-6)
+               if nelect:
                     cl_settings.update_start_settings("NELECT", nelect)
-               else: 
+               else:
                  pass
-  
+
                collinear_calc = SCFCalculation(cl_dir, pseudo_par=None, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
             itr = 0
             non_collinear_calcs = []
@@ -507,11 +507,11 @@ class MagenticAnisotropySphereFlow:
                 ncl_settings.update_electronic_settings("ISMEAR", ismear)
                 ncl_settings.update_electronic_settings("SIGMA", sigma)
                 ncl_settings.update_electronic_settings("EDIFF", 1.0E-4)
-                if nelect:                                                
+                if nelect:
                      ncl_settings.update_start_settings("NELECT", nelect)
-                else: 
-                  pass 
-  
+                else:
+                  pass
+
                 ncl_dir = workdir+"/"+"scf_ncl"+"/"+"scf_ncl_"+str(itr)
                 ncl_calc = SCFCalculation(ncl_dir, pseudo_par=None, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
                 non_collinear_calcs.append(ncl_calc)
