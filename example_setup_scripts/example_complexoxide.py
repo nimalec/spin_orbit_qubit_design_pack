@@ -49,7 +49,11 @@ class PTOFe_MAEworkflow(MagenticAnisotropySphereFlow):
             """
             self._workdir = workdir
             self._npoints = npoints
+<<<<<<< HEAD:example_setup_scripts/example_complexoxide.py
             potcar_path_ = "../pseudos/PTO_Fe_POTCAR"
+=======
+            potcar_path_ = "/global/scratch/nleclerc/spin_orbit_qubit_design_pack/pseudos/PTOFe_POTCAR" 
+>>>>>>> 336b2815fa1b34a17b5a04ad8a8fcea422e6efe9:src/example_complexoxide.py
             kgrid_ = [2,2,2]
             nodes_ = 6
             ppn_ = 24
@@ -59,4 +63,4 @@ class PTOFe_MAEworkflow(MagenticAnisotropySphereFlow):
             encut_ = 750
             magmom_ = [0, 0, 0, 6]
 
-            MagenticAnisotropySphereFlow.__init__(self, workdir, npoints, kgrid_, nbands, nodes_, ppn_, ref_orient, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path, name ="PTOFe_mae_sphere")
+            MagenticAnisotropySphereFlow.__init__(self, workdir, npoints, kgrid_, nbands, nodes_, ppn_, ref_orient, ldaul_, magmom_, Uparam_, Jparam_, encut_, potcar_path_, struct_path, name ="PTOFe_mae_sphere", ismear=0)
