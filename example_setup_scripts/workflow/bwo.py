@@ -1,4 +1,4 @@
-from example_complexoxide import *
+from ../example_complexoxide import *
 
 npoints = 200
 #nbands_Fe_Bi = 1494
