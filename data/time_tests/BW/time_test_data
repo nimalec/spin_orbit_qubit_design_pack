@@ -1,0 +1,20 @@
+##collinear run 
+n_atoms = 
+soc = false 
+k_mesh = 
+pseudo  = 
+machine = 
+tot_num_core =
+kpar = 
+ncore =  
+
+
+##noncollinear run 
+n_atoms = 
+soc = fals
+k_mesh = 
+pseudo  =  
+machine = 
+tot_num_co = 
+kpar = 
+ncore =  
