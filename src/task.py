@@ -409,21 +409,21 @@ class SCFCalculation():
      #  elif self._run_status == "running" and check_outcar_file_h(path) == True:
      #       self._cputime = self.get_run_time()
 
-#def get_total_energy(self):
-#    energ_list = []
-#    fl_nm = self._workdir + 'OUTCAR'
-#    isfile = os.path.isfile(fl_nm)
-#    if isfile == False:
-#      print("OUTCAR file not present! try to re-run the calculation.")
-#       pass
-#    else:
-#      with open(fl_nm, 'r') as f:
-#        for line in f.readlines():
-#          if 'TOTEN' in line:
-#            energ_list.append(line)
-#    tot_energ = energ_list[len(energ_list)-1]
-#    return float(tot_energ[30:40])
-#
+def get_total_energy(self):
+   energ_list = []
+   fl_nm = self._workdir + 'OUTCAR'
+   isfile = os.path.isfile(fl_nm)
+   if isfile == False:
+     print("OUTCAR file not present! try to re-run the calculation.")
+      pass
+   else:
+     with open(fl_nm, 'r') as f:
+       for line in f.readlines():
+         if 'TOTEN' in line:
+           energ_list.append(line)
+   tot_energ = energ_list[len(energ_list)-1]
+   return float(tot_energ[30:40])
+
 #def get_fermi(self):
 #    fl_nm = self._workdir + 'OUTCAR'
 #    isfile = os.path.isfile(fl_nm)
