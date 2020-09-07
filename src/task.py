@@ -3,7 +3,7 @@ import os
 from shutil import copyfile
 from structure import *
 from in_out import *
-
+import math 
 __author__ = 'Nima Leclerc'
 __email__ = 'nleclerc@lbl.gov'
 
@@ -44,7 +44,7 @@ class InputParameters:
              "partition": "etna", "nodes": 4,"ppn": 24,
               "max_time": "24:00:00", "NCORE": 8, "KPAR": 2, "exec": "vasp_std"}
             self._electronic_settings = electronic_settings or  {"PREC":"Accurate" , "ALGO": "Normal", "ENCUT": 800,
-            "NELM": None, "NELMIN": None, "GGA": "PS" ,"EDIFF": 10E-05, "ISMEAR": 1,
+            "NELM": None, "NELMIN": None, "GGA": "PS" ,"EDIFF": 10E-05, "ISMEAR": 0,
             "SIGMA": 0.2, "LASPH": ".TRUE.", "LREAL": "Auto", "ADDGRID": ".TRUE.", "MAXMIX": 100, "BMIX": 1.5}
             self._ionic_settings = ionic_settings
             self._magnetic_settings = magnetic_settings
@@ -180,7 +180,7 @@ class DefaultOptimizationParameters(InputParameters):
 
             ionic = {"EDIFF": 1E-17, "NSW": 20, "IBRION": 2,"ISIF": 2, "ISYM": -1, "NBLOCK": 1,  "KBLOCK": 20}
             InputParameters.__init__(self, ionic_settings=ionic, name=name)
-            self.update_electronic_sttings("ENCUT", encut)
+            self.update_electronic_settings("ENCUT", encut)
 
 
 
@@ -216,7 +216,7 @@ class DefaultSCFUParameters(InputParameters):
 
 
 class DefaultMagCLParameters(InputParameters):
-         def __init__(self, encut, magmom, ldaul, Uparam, Jparam, name="DFTCL_settings"):
+         def __init__(self, encut, magmom, ldaul, Uparam, Jparam, nupdown=None ,name="DFTCL_settings"):
              """
              Sets default input parameters for scf spin collinear calculation
 
@@ -225,17 +225,18 @@ class DefaultMagCLParameters(InputParameters):
              ldaul (list): list of  orbital types for each species
              Uparam (list): list of U parameters for each species
              Jparam (list): list of J paramters for each species
+             nupdown (flt): difference between up and down spins   
              name (str):  name for magnetic noncolinear calculation setting [default="DFTCL_settings"]
 
              """
 
-             cl_settings =  {"ISPIN": 2, "MAGMOM": magmom, "SAXIS": None, "LSORBIT": None, "LNONCOLLINEAR": None}
+             cl_settings =  {"ISPIN": 2, "MAGMOM": magmom, "SAXIS": None, "LSORBIT": None, "LNONCOLLINEAR": None, "NUPDOWN": nupdown}
              dftu_settings = {"LDAU": ".TRUE.", "LDAUU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIMX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=cl_settings, hubbard_settings=dftu_settings)
              self.update_electronic_settings("encut", encut)
 
 class DefaultMagNCLParameters(InputParameters):
-         def __init__(self, encut, spinaxis, ldaul, Uparam, Jparam, name='DFTCL_settings'):
+         def __init__(self, encut, spinaxis, ldaul, Uparam, Jparam, nupdown=None, name='DFTCL_settings'):
              """
             Sets default input parameters for scf spin non-collinear calculation
 
@@ -244,9 +245,10 @@ class DefaultMagNCLParameters(InputParameters):
              ldaul (list): list of  orbital types for each species
              Uparam (list): list of U parameters for each species
              Jparam (list): list of J paramters for each species
+             nupdown (flt): differnce between number of up and down spins 
              name (str):  name for magnetic noncolinear calculation setting [default="DFTNCL_settings"]
              """
-             ncl_settings =  {"ISPIN": 2, "MAGMOM": None, "SAXIS": spinaxis, "LSORBIT": ".TRUE.", "LNONCOLLINEAR": ".TRUE."}
+             ncl_settings =  {"ISPIN": 2, "MAGMOM": None, "SAXIS": spinaxis, "LSORBIT": ".TRUE.", "LNONCOLLINEAR": ".TRUE.", "NUPDOWN":nupdown}
              dftu_settings = {"LDAU": ".TRUE.", "LDAUU": Uparam, "LDATYPE": 2, "LDAUL": ldaul, "LDAUJ": Jparam , "LMAXMIX": 4}
              InputParameters.__init__(self, name=name, magnetic_settings=ncl_settings, hubbard_settings=dftu_settings)
              self.update_electronic_settings("ENCUT", encut)
@@ -435,9 +437,63 @@ class SCFCalculation():
 #               fermi_str = line
 #   return float(fermi_str[12:18])
 
+class SpinMultipletSeries:
+     def __init__(self, workdir, npoints, nupdown_rng ,kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, ismear, saxis=None, name ="scf", time="12:00:00",  sigma=0.2, nelect=None): 
+
+         """
+         Computes the energy dependence on total configuration
+         """
+         self._workdir = workdir
+         self._npoints = npoints
+         self._name = name
+         self._structure_path = struct_path
+         self._potcar_path =  potcar_path
+         self._nupdownlst = np.linspace(nupdown_rng[0], nupdown_rng[1], npoints)
+
+     
+         def set_calcs_h(nupdown, saxis, workdir, nodes, ppn, time,ismear, sigma, kgrid, encut, magmom, ldaul, Uparam, Jparam, nelect, nbands=None):  
+             settings  = []  
+             for s in nupdown.tolist():  
+                 if saxis: 
+                    ncl_settings = DefaultMagNCLParameters(encut=encut, spinaxis=saxis, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam, nupdown=s)
+                    ncl_settings.update_parallel_settings("exec", "vasp_ncl") 
+                    ncl_settings.update_electronic_settings("EDIFF", 1.0E-4)
+                    settings.append(ncl_settings)                    
+                 else:  
+                    cl_settings = DefaultMagCLParameters(encut=encut, magmom=magmom, ldaul=ldaul, Uparam=Uparam, Jparam=Jparam, nupdown=s)  
+                    cl_settings.update_electronic_settings("EDIFF", 1.0E-6)
+                    settings.append(cl_settings)
+             calcs = []  
+             itr = 0 
+             for s in settings: 
+                 s.update_start_settings("NBANDS", nbands)
+                 s.update_start_settings("LWAVE", ".FALSE.")
+                 s.update_parallel_settings("flnm ", "run.sh")
+                 s.update_parallel_settings("job_name", "scf"+str(itr))
+                 s.update_parallel_settings("nodes", nodes)
+                 s.update_parallel_settings("ppn", ppn)
+                 s.update_parallel_settings("max_time", time)
+                 s.update_parallel_settings("KPAR", None)
+                 s.update_electronic_settings("ISMEAR", ismear)
+                 s.update_electronic_settings("SIGMA", sigma)
+                 s.update_electronic_settings("EDIFF", 1.0E-6)
+                 s_dir = workdir+"/"+"scf_"+str(itr)
+                 calc = SCFCalculation(s_dir, pseudo_par=None, kgrid=kgrid, name="scf_"+str(itr), input_parameters=s) 
+                 itr += 1 
+                 calcs.append(calc) 
+             return calcs 
+ 
+         self._calc_list = set_calcs_h(self._nupdownlst, saxis, workdir, nodes, ppn, time,ismear, sigma, kgrid, encut, magmom, ldaul, Uparam, Jparam,  nelect, nbands) 
+ 
+     def make_calculations(self):
+         os.mkdir(self._workdir)
+         for calc in self._calc_list: calc.make_calculation(struct_path=self._structure_path, potcar_path=self._potcar_path)                
+
+
+
 class MagenticAnisotropySphereFlow:
 
-    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", ismear=-5, sigma=0.2, nelect=None, cl_dir=None):
+    def __init__(self, workdir, npoints, kgrid, nbands, nodes, ppn, ref_orient, ldaul, magmom, Uparam, Jparam, encut, potcar_path, struct_path, ismear, name ="mae_calc", time_cl="12:00:00", time_ncl="01:40:00", sigma=0.2, nelect=None, cl_dir=None, angle_rng=None):
 
         """
         Computes the MCAE sphere for a defined structure.
@@ -451,7 +507,8 @@ class MagenticAnisotropySphereFlow:
         self._reference_orientation = ref_orient
         self._collinear_calc = None
         self._cl_dir = cl_dir
-        self._collinear_calc = None
+        self._angle_rng = angle_rng or [[0, 2*np.pi],[0,np.pi]]         
+ 
         if self._cl_dir:
            pass
         else:
@@ -469,8 +526,24 @@ class MagenticAnisotropySphereFlow:
             saxes = saxes_temp.tolist()
             return saxes
 
-        self._saxes = generate_spin_axes_h(self._npoints)
-        self._saxes.append(self._reference_orientation)
+        def generate_semi_spin_axes_h(npoints, thet_rng, phi_rng):
+            num = math.floor(math.sqrt(npoints))
+            thet = np.linspace(thet_rng[0], thet_rng[1], num)
+            phi = np.linspace(phi_rng[0], phi_rng[1], num)
+            u, v = np.meshgrid(thet, phi)
+            x=np.cos(u)*np.sin(v)
+            y=np.sin(u)*np.sin(v)
+            z=np.cos(v)
+            pts = np.array([x.flatten(), y.flatten(), z.flatten()])
+            pts = pts.T 
+            return pts.tolist() 
+
+        if angle_rng: 
+           self._saxes =  generate_semi_spin_axes_h(self._npoints, angle_rng[0], angle_rng[1])
+        else: 
+           self._saxes = generate_spin_axes_h(self._npoints)
+
+	#self._saxes.append(self._reference_orientation)
 
         def set_calculations_h(cl_calc, cl_dir, saxes, workdir, nodes, ppn, time_cl, time_ncl, ismear, sigma, kgrid, encut, magmom, ldaul, Uparam, Jparam, nbands, nelect):
             if cl_calc:
@@ -490,7 +563,7 @@ class MagenticAnisotropySphereFlow:
                else:
                  pass
 
-               collinear_calc = SCFCalculation(cl_dir, pseudo_par=None, kgrid=kgrid, name="scf_cl", input_parameters=cl_settings)
+               collinear_calc = SCFCalculation(cl_dir, pseudo_par=None, kgrid=kgrid, name="scfcl", input_parameters=cl_settings)
             itr = 0
             non_collinear_calcs = []
             for spin_axis in saxes:
@@ -513,7 +586,7 @@ class MagenticAnisotropySphereFlow:
                   pass
 
                 ncl_dir = workdir+"/"+"scf_ncl"+"/"+"scf_ncl_"+str(itr)
-                ncl_calc = SCFCalculation(ncl_dir, pseudo_par=None, kgrid=kgrid, name="scf_ncl_"+str(itr), input_parameters=ncl_settings)
+                ncl_calc = SCFCalculation(ncl_dir, pseudo_par=None, kgrid=kgrid, name="scfncl"+str(itr), input_parameters=ncl_settings)
                 non_collinear_calcs.append(ncl_calc)
                 itr += 1
             return [collinear_calc, non_collinear_calcs]

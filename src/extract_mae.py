@@ -81,10 +81,3 @@ def mae_outfile_write(workdir, dirs):
         f.write(line) 
     f.close()             
 
-
-
-
-work_dir_ = "/global/scratch/nleclerc/soc_mae_predictions/bwoFe_orhto_mae_sphere_v00/scf_ncl" 
-dirs = range(135)  
-mae_outfile_write(work_dir_, dirs)
-
